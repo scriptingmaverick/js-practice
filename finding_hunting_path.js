@@ -1,8 +1,15 @@
-const savannahLand = "L L  L           Z"
+const testcase1 = "LZ"
+const testcase2 = "L Z"
+const testcase3 = "L ZL"
+const testcase4 = "L  L"
+const testcase5 = "L  ZZ L"
+const testcase6 = "Z  Z    Z"
+const testcase7 = "L L  L           Z"
+
+const savannahLand = testcase5
 
 let isLionsAvailable = false
 let isZebrasAvailable = false
-
 for(let i=0; i < savannahLand.length; i++) {
     if( (savannahLand[i] === "L") && !isLionsAvailable){
         isLionsAvailable = true
@@ -12,21 +19,16 @@ for(let i=0; i < savannahLand.length; i++) {
         break
     }
 }
-
 const isHuntingPossible = isLionsAvailable && isZebrasAvailable
 
+let shortestPath = Infinity
 
 if(isHuntingPossible) {
-
     let isPreyOrPredator = ""
     let newPath = 0
     let isPreyFound = false
     let isPredatorFound = false
-
-    let shortestPath = Infinity
-
     for(let i = 0; i < savannahLand.length; i++) {
-
         if ( (isPreyFound && savannahLand[i] === "Z" ) || (isPredatorFound && savannahLand[i] === "L")) {
             newPath = 0
         } else if(savannahLand[i] === "L" && !isPredatorFound) {
@@ -38,23 +40,18 @@ if(isHuntingPossible) {
         } else if (savannahLand[i] === " " ) { 
             newPath++
         }
-    
         if(isPreyFound && isPredatorFound) {
             shortestPath = newPath < shortestPath ? newPath : shortestPath
-
             if(isPreyOrPredator === "Predator"){
                 isPreyFound = false
             }  else{
                 isPredatorFound = false
-            }
-            
+            }   
             newPath = 0
         }
-    
     }
-
-    console.log(shortestPath)
-    
 } else {
-    console.log(-1)
+    shortestPath = -1
 }
+
+console.log("Input:",'"'+savannahLand+'" ,',"Output:",shortestPath)
