@@ -11,10 +11,15 @@ for(let i=0; i < savannahLand.length; i++) {
     }else if (isLionsAvailable && isZebrasAvailable){
         break
     }
-    console.log(savannahLand[i],isLionsAvailable,isZebrasAvailable)
 }
 
 const isHuntingPossible = isLionsAvailable && isZebrasAvailable
-let shortestPath = isHuntingPossible ? 0 : -1
 
-console.log(shortestPath)
+if(isHuntingPossible) {
+    let shortestPath = 0
+    
+    console.log(shortestPath)
+
+} else{
+    console.log(-1)
+}
