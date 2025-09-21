@@ -6,9 +6,9 @@ const testcase5 = "L  ZZ L"
 const testcase6 = "Z  Z    Z"
 const testcase7 = "L L  L           Z"
 const testcase8 = "      ZL            "
-const testcase9 = "                  "
+const testcase9 = "   L  Z    L Z"
 
-const savannahLand = testcase8
+const savannahLand = testcase3
 
 let isLionsAvailable = false
 let isZebrasAvailable = false
@@ -28,7 +28,6 @@ let shortestPath = Infinity
 if(isHuntingPossible) {
     let isPreyOrPredator = ""
     let newPath = 0
-    let canCountPath = false
     let isPreyFound = false
     let isPredatorFound = false
     for(let i = 0; i < savannahLand.length; i++) {
@@ -37,12 +36,10 @@ if(isHuntingPossible) {
         } else if(savannahLand[i] === "L" && !isPredatorFound) {
             isPreyOrPredator = "Predator"
             isPredatorFound = true
-            canCountPath = true
         } else if(savannahLand[i] === "Z" && !isPreyFound) {
             isPreyOrPredator = "Prey"
             isPreyFound = true
-            canCountPath = true
-        } else if (savannahLand[i] === " " && canCountPath) { 
+        } else if (savannahLand[i] === " " && isPreyOrPredator) { 
             newPath++
         }
         if(isPreyFound && isPredatorFound) {
