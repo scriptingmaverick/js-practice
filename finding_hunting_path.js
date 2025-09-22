@@ -9,20 +9,19 @@ const testcase8 = "      ZL            "
 const testcase9 = "   L  Z    L Z"
 
 const savannahLand = testcase3
-
 let isLionsAvailable = false
 let isZebrasAvailable = false
-for(let i=0; i < savannahLand.length; i++) {
-    if( (savannahLand[i] === "L") && !isLionsAvailable){
+
+for(let index=0; index < savannahLand.length; index++) {
+    if( (savannahLand[index] === "L") && !isLionsAvailable){
         isLionsAvailable = true
-    } else if( (savannahLand[i] === "Z") && !isZebrasAvailable) {
+    } else if( (savannahLand[index] === "Z") && !isZebrasAvailable) {
         isZebrasAvailable = true
     }else if (isLionsAvailable && isZebrasAvailable){
         break
     }
 }
 const isHuntingPossible = isLionsAvailable && isZebrasAvailable
-
 let shortestPath = Infinity
 
 if(isHuntingPossible) {
@@ -30,16 +29,16 @@ if(isHuntingPossible) {
     let newPath = 0
     let isPreyFound = false
     let isPredatorFound = false
-    for(let i = 0; i < savannahLand.length; i++) {
-        if ( (isPreyFound && savannahLand[i] === "Z" ) || (isPredatorFound && savannahLand[i] === "L")) {
+    for(let index = 0; index < savannahLand.length; index++) {
+        if ( (isPreyFound && savannahLand[index] === "Z" ) || (isPredatorFound && savannahLand[index] === "L")) {
             newPath = 0
-        } else if(savannahLand[i] === "L" && !isPredatorFound) {
+        } else if(savannahLand[index] === "L" && !isPredatorFound) {
             isPreyOrPredator = "Predator"
             isPredatorFound = true
-        } else if(savannahLand[i] === "Z" && !isPreyFound) {
+        } else if(savannahLand[index] === "Z" && !isPreyFound) {
             isPreyOrPredator = "Prey"
             isPreyFound = true
-        } else if (savannahLand[i] === " " && isPreyOrPredator) { 
+        } else if (savannahLand[index] === " " && isPreyOrPredator) { 
             newPath++
         }
         if(isPreyFound && isPredatorFound) {
