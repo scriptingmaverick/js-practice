@@ -22,7 +22,7 @@ for(let index=0; index < savannahLand.length; index++) {
     }
 }
 const isHuntingPossible = isLionsAvailable && isZebrasAvailable
-let shortestPath = Infinity
+let shortestPath = isHuntingPossible ? Infinity : -1
 
 if(isHuntingPossible) {
     let isPreyOrPredator = ""
@@ -41,6 +41,7 @@ if(isHuntingPossible) {
         } else if (savannahLand[index] === " " && isPreyOrPredator) { 
             newPath++
         }
+        
         if(isPreyFound && isPredatorFound) {
             shortestPath = newPath < shortestPath ? newPath : shortestPath
             if(isPreyOrPredator === "Predator"){
@@ -51,8 +52,6 @@ if(isHuntingPossible) {
             newPath = 0
         }
     }
-} else {
-    shortestPath = -1
 }
 
-console.log("Input:",'"'+savannahLand+'" ,',"Output:",shortestPath)
+console.log("Input:", '"' + savannahLand + '" ,', "Output:", shortestPath)
