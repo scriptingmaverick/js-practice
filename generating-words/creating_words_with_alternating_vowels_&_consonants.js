@@ -1,29 +1,41 @@
+let newWord = '';
+let mutableString = '';
+let wordsString = '';
+let remainingLetters = '';
+let lastLetter = '';
+
 function generateWords(string) {
-  let mutableString = string;
-  let answerString = '';
+  wordsString = '';
+  mutableString = string;
 
   while (mutableString.length > 0) {
-    let newWord = mutableString[0];
-    let lastLetter = isVowel(mutableString[0]) ? 'vowel' : 'consonant';
-    let remainingString = '';
-
-    for (let index = 1; index < mutableString.length; index++) {
-      if (checkIsVowel(mutableString[index], lastLetter)) {
-        newWord += mutableString[index];
-        lastLetter = 'vowel';
-      } else if (checkIsConsonant(mutableString[index], lastLetter)) {
-        newWord += mutableString[index];
-        lastLetter = 'consonant';
-      } else {
-        remainingString += mutableString[index];
-      }
-    }
-
-    answerString += newWord + (remainingString.length > 0 ? ', ' : '');
-    mutableString = remainingString;
+    generateNewWord();
   }
 
-  return answerString;
+  return wordsString;
+}
+
+function generateNewWord() {
+  newWord = mutableString[0];
+  remainingLetters = '';
+  lastLetter = isVowel(mutableString[0]) ? 'vowel' : 'consonant';
+  createWord();
+  wordsString += newWord + (remainingLetters.length > 0 ? ', ' : '');
+  mutableString = remainingLetters;
+}
+
+function createWord() {
+  for (let index = 1; index < mutableString.length; index++) {
+    if (checkIsVowel(mutableString[index], lastLetter)) {
+      newWord += mutableString[index];
+      lastLetter = 'vowel';
+    } else if (checkIsConsonant(mutableString[index], lastLetter)) {
+      newWord += mutableString[index];
+      lastLetter = 'consonant';
+    } else {
+      remainingLetters += mutableString[index];
+    }
+  }
 }
 
 function checkIsVowel(character, lastLetter) {
