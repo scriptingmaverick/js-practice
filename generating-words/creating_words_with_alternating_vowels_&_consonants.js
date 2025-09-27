@@ -8,10 +8,10 @@ function generateWords(string) {
     let remainingString = '';
 
     for (let index = 1; index < mutableString.length; index++) {
-      if (isVowel(mutableString[index]) && lastLetter === 'consonant') {
+      if (checkIsVowel(mutableString[index], lastLetter)) {
         newWord += mutableString[index];
         lastLetter = 'vowel';
-      } else if (!isVowel(mutableString[index]) && lastLetter === 'vowel') {
+      } else if (checkIsConsonant(mutableString[index], lastLetter)) {
         newWord += mutableString[index];
         lastLetter = 'consonant';
       } else {
@@ -19,11 +19,18 @@ function generateWords(string) {
       }
     }
 
-    answerString += newWord + (remainingString.length > 0 ? ',' : '');
+    answerString += newWord + (remainingString.length > 0 ? ', ' : '');
     mutableString = remainingString;
   }
 
   return answerString;
+}
+
+function checkIsVowel(character, lastLetter) {
+  return isVowel(character) && lastLetter === 'consonant';
+}
+function checkIsConsonant(character, lastLetter) {
+  return !isVowel(character) && lastLetter === 'vowel';
 }
 
 function isVowel(char) {
@@ -51,14 +58,14 @@ function testGenerating(string, expected) {
 }
 
 function main() {
-  testGenerating("apple", "ape,p,l");
-  testGenerating("there", "tere,h");
-  testGenerating("hello", "helo,l");
-  testGenerating("abyss", "ab,y,s,s");
-  testGenerating("this", "tis,h");
-  testGenerating("command", "coman,m,d");
-  testGenerating("structure", "sucure,t,r,t");
-  testGenerating("thoughtworks", "togor,huh,t,w,k,s")
+  testGenerating("apple", "ape, p, l");
+  testGenerating("there", "tere, h");
+  testGenerating("hello", "helo, l");
+  testGenerating("abyss", "ab, y, s, s");
+  testGenerating("this", "tis, h");
+  testGenerating("command", "coman, m, d");
+  testGenerating("structure", "sucure, t, r, t");
+  testGenerating("thoughtworks", "togor, huh, t, w, k, s")
 }
 
 main();
