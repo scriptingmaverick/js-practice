@@ -1,57 +1,21 @@
-const MAX_RIVER_PATH = 65;
-const EMOJI1 = '🐺';
-const EMOJI2 = '🐑';
-const EMOJI3 = '🌳';
+const MAX_RIVER_PATH = 80;
+const EMOJIS = ['🐺', '🐑', '🌳'];
+
+let leftSide_animals = '';
+let rightSide_animals = '';
+let user_choices = '__';
 
 function delay(x = 2) {
   for (let i = 0; i < 500000000 * x; i++);
 }
 
 function pad(length, end, text = '') {
-  return text.padStart(end + text.length).padEnd(length);
+  const maxLen = length > MAX_RIVER_PATH ? MAX_RIVER_PATH : length;
+  return text.padStart(end + text.length).padEnd(maxLen);
 }
 
 function generateSequence(length, char = ' ', begin = '', end = '') {
   return begin + char.repeat(length - begin.length - end.length) + end;
-}
-
-function leftSidePart(animals = '🐺🐑🌳') {
-  const leftSide = [animals];
-  return leftSide;
-}
-
-function rightSidePart(animals = '') {
-  const rightSide = [animals];
-  return rightSide;
-}
-
-// function createTransportingScene(choices, boat) {
-//   delay(1);
-// }
-
-function getBoat(boatPosition, choices = '__') {
-  let firstPart = `_____${choices}___👨‍🦯___`;
-  const secondPart = `\\___${generateSequence(choices.length * 2, '_')}______/`;
-  let excessive = '  ';
-
-  if (choices !== '__') {
-    firstPart = `___${choices}___👨‍🦯___`;
-    excessive = '';
-  }
-
-  const boat = [
-    firstPart,
-    secondPart];
-
-  // for (let index = 0; index < boat.length; index++) {
-  boat[0] = `${pad(78 + choices.length, boatPosition, boat[0])}${excessive}`;
-  boat[1] = `${pad(78 + choices.length, boatPosition, boat[1])}`;
-  // }
-  return boat;
-}
-
-function getLine3Elem1(leftSide) {
-  return pad(25, 24 - leftSide.length, leftSide);
 }
 
 function changeToEmojis(array) {
@@ -59,40 +23,66 @@ function changeToEmojis(array) {
   for (let index = 0; index < array.length; index++) {
     switch (array[index]) {
       case '1':
-        emojis += EMOJI1;
+        emojis += EMOJIS[0];
         break;
       case '2':
-        emojis += EMOJI2;
+        emojis += EMOJIS[1];
         break;
       case '3':
-        emojis += EMOJI3;
+        emojis += EMOJIS[2];
         break;
       default:
-        emojis += '_';
+        emojis += ' ';
         break;
     }
   }
   return emojis;
 }
 
-function checkAndReplace(array, emojis) {
-  // console.log('in chkAndReplace : ', array, emojis);
-  let replacedArray = array;
-  for (let emojiIndex = 0; emojiIndex < emojis.length; emojiIndex++) {
-    // console.log('before replacing : ',replacedArray)
-    replacedArray = replacedArray.replace(emojis[emojiIndex], '');
-    // console.log('after replacing : ',replacedArray)
+function getBoat(boatPosition) {
+  const choices = changeToEmojis(user_choices);
+  let firstPart = `________🕺___`;
+  const secondPart = `\\___${generateSequence(choices.length + 2, '_')}____/`;
+  if (choices !== '  ') {
+    firstPart = `___${choices}___🕺___`;
   }
-  return changeToEmojis(replacedArray);
+
+  const boat = [firstPart, secondPart];
+  boat[0] = `|${pad(80, boatPosition, boat[0])}|`;
+  boat[1] = `|${pad(80, boatPosition, boat[1])}|`;
+  return boat;
 }
 
-function getline2And3(leftSide, rightSide, boatPosition, emojis, scene = 0) {
-  let boat = getBoat(boatPosition, changeToEmojis(emojis));
+function getLine3Elem1() {
+  const leftSide = changeToEmojis(leftSide_animals);
+  return pad(25, 24 - leftSide.length, leftSide);
+}
+
+function checkAndReplace(emojis) {
+  // console.log('in chkAndReplace : ', array, emojis);
+  let replacedArray = leftSide_animals.split('');
+  for (let emojiIndex = 0; emojiIndex < emojis.length; emojiIndex++) {
+    // console.log('before replacing : ',replacedArray,emojis)
+    // replacedArray = replacedArray.replace(emojis[emojiIndex], ' ');
+    for (let index = 0; index < replacedArray.length; index++) {
+      if (replacedArray[index] === emojis[emojiIndex]) {
+        replacedArray[index] = ' ';
+        break;
+      }
+    }
+    // console.log('after replacing : ',replacedArray)
+  }
+
+  leftSide_animals = replacedArray.reverse().join('')
+  return changeToEmojis(leftSide_animals);
+}
+
+function getline2And3(boatPosition, scene = 0) {
+  let boat = getBoat(boatPosition);
   // console.log(boat.join('\n'))
-  // console.log(changeToEmojis(leftSide), changeToEmojis(rightSide), boatPosition, changeToEmojis(emojis), scene);
-  const excessive = boatPosition < 60 ? ' ' : '';
+  // console.log(changeToEmojis(leftSide), changeToEmojis(rightSide), boatPosition, changeToEmojis(user_choices), scene);
   const line2 = [generateSequence(25), generateSequence(40), generateSequence(25)];
-  const line3 = [getLine3Elem1(changeToEmojis(leftSide)), boat[0] + excessive, pad(25, 3, changeToEmojis(rightSide))];
+  const line3 = [getLine3Elem1(), boat[0], pad(25, 1, changeToEmojis(rightSide_animals))];
   if (scene === 0) {
     return [line2, line3];
   }
@@ -108,33 +98,33 @@ function getline2And3(leftSide, rightSide, boatPosition, emojis, scene = 0) {
 
   switch (scene) {
     case 2:
-      line2[0] = generateSequence(25 - emojis.length) + changeToEmojis(emojis);
+      line2[0] = generateSequence(25 - user_choices.length) + changeToEmojis(user_choices);
       break;
     case 3:
-      line2[1] = generateSequence(6 - emojis.length) + changeToEmojis(emojis) + generateSequence(40 - 6 - emojis.length);
+      line2[1] = generateSequence(6 - user_choices.length) + changeToEmojis(user_choices) + generateSequence(40 - 6 - user_choices.length);
       break;
     case 4:
-      boat = getBoat(boatPosition, changeToEmojis(emojis));
+      boat = getBoat(boatPosition, changeToEmojis(user_choices));
       line3[1] = boat[0];
       break;
     case 5:
       const firstPart = 40 - boat[0].length + 4;
-      line2[1] = generateSequence(firstPart) + changeToEmojis(emojis) + generateSequence(40 - firstPart - emojis.length);
+      line2[1] = generateSequence(firstPart) + changeToEmojis(user_choices) + generateSequence(40 - firstPart - user_choices.length);
       break;
     case 6:
-      line2[2] = changeToEmojis(emojis) + generateSequence(25 - emojis.length);
+      line2[2] = changeToEmojis(user_choices) + generateSequence(25 - user_choices.length);
       break;
     case 7:
-      rightSide += changeToEmojis(emojis);
-      line3[2] = pad(25, 1, changeToEmojis(rightSide));
+      rightSide += changeToEmojis(user_choices);
+      line3[2] = pad(25, 1, changeToEmojis(rightSide_animals));
       break;
   }
-  leftSide = checkAndReplace(leftSide, emojis);
-  // console.log('after replace : ',leftSide)
-  line3[0] = getLine3Elem1(leftSide);
+  leftSide_animals = checkAndReplace(user_choices);
+  // console.log('after replace : ',leftSide_animals)
+  line3[0] = getLine3Elem1();
 
   // console.log('')
-  return [line2, line3, leftSide];
+  return [line2, line3];
 }
 // console.clear();
 // console.log(getline2And3('123', '23', 3, '12', 1).join('\n'))
@@ -143,10 +133,10 @@ function getline2And3(leftSide, rightSide, boatPosition, emojis, scene = 0) {
 // delay()
 // console.log(getline2And3('123', '23', 3, '12', 3).join('\n'))
 
-function generateGround(leftSide, rightSide, boatPosition = 3, choices = '__', scene = 0) {
+function generateGround(boatPosition = 3, scene = 0) {
   const boat = getBoat(boatPosition);
   const waterGround = generateSequence(40, '☵');
-  const lines = getline2And3(leftSide, rightSide, boatPosition, choices, scene);
+  const lines = getline2And3(boatPosition, scene);
   const line2 = lines[0];
   const line3 = lines[1];
   const ground = [
@@ -154,8 +144,8 @@ function generateGround(leftSide, rightSide, boatPosition = 3, choices = '__', s
     [line2[0], line2[1], line2[2]],
     [line3[0], line3[1], line3[2]],
     [generateSequence(25, '-'), boat[1], generateSequence(25, '-')],
-    [generateSequence(26, ' ', '', '|'), generateSequence(39, '🌊'), generateSequence(25, ' ', '|')],
-    [generateSequence(26, ' ', '', '|'), generateSequence(39, '🌊'), generateSequence(25, ' ', '|')],
+    [generateSequence(26, ' ', '', '|'), generateSequence(40, '🌊'), generateSequence(25, ' ', '|')],
+    [generateSequence(26, ' ', '', '|'), generateSequence(40, '🌊'), generateSequence(25, ' ', '|')],
     [generateSequence(26, ' ', '', '|'), waterGround, generateSequence(25, ' ', '|')],
     [generateSequence(26, ' ', '', '|'), waterGround, generateSequence(25, ' ', '|')],
     [generateSequence(26, ' ', '', '|'), waterGround, generateSequence(25, ' ', '|')]
@@ -164,40 +154,54 @@ function generateGround(leftSide, rightSide, boatPosition = 3, choices = '__', s
   for (let index = 0; index < ground.length; index++) {
     newGround[index] = ground[index].join('');
   }
-  return [newGround.join('\n'), lines[2]];
+  return newGround.join('\n');
 }
 
-function generateScene(leftSide, rightSide, choices = '__') {
-  let vars = generateGround(leftSide, rightSide, 3, choices, 1);
-  let ground = vars[0];
-  if (choices !== '__') {
-    for (let i = 2; i <= 4; i++) {
+function generateScene(leftSide, rightSide, choices) {
+  leftSide_animals = leftSide;
+  rightSide_animals = rightSide;
+  let ground = generateGround(3, 1);
+  // console.log(ground)
+  if (user_choices !== '__') {
+    for (let i = 2; i <= 3; i++) {
       console.log(ground);
       delay();
-      vars = generateGround(leftSide, rightSide, 3, choices, i);
-      ground = vars[0];
+      ground = generateGround(3, i);
       console.clear();
     }
-    console.log(ground);
-    leftSide = vars[1];
-    console.log(leftSide)
   }
+  //   console.log(ground);
+    // delay();
+    // user_choices = choices;
+    // ground = generateGround(3, 4);
+    // console.clear();
+    // delay();
+    // console.log(ground);
+  
 
-  console.clear();
-  for (let index = 8; index < MAX_RIVER_PATH; index += 5) {
-    console.log(ground);
-    delay();
-    vars = generateGround(leftSide, rightSide, index, choices);
-    ground = vars[0];
-    console.clear();
-  }
-  console.log(ground);
-  leftSide = vars[1];
+  // console.clear();
+  // for (let index = 8; index < MAX_RIVER_PATH; index += 5) {
+  //   console.log(ground);
+  //   delay();
+  //   vars = generateGround(leftSide, rightSide, index, user_choices);
+  //   ground = vars[0];
+  //   console.clear();
+  // }
+  // console.log(ground);
+  // leftSide = vars[1];
 
-  console.log(leftSide);
+  // console.log(leftSide);
 }
 
-// console.log(generateGround('123', '12'));
 // generateScene('123', '12');
 console.clear()
-generateScene('123', '12', '23');
+// leftSide_animals = '13'
+// rightSide_animals = '23'
+// console.log(generateGround())
+// user_choices = '12'
+// console.log(generateGround());
+// user_choices = '1'
+// console.log(generateGround(45));
+// console.log(generateGround(65));
+// console.log(generateGround(66));
+generateScene('123', '12', '23'); 
