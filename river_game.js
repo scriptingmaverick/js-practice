@@ -20,10 +20,12 @@ let user_choices = '';
 
 let canIncludeAnimals = false;
 let deathMsg = '';
+let choice_limit = 2;
 
-let choice_limit = 3;
+let backup_leftSide_animals = '';
+let backup_rightSide_animals = '';
 
-function delay(x = 2) {
+function delay(x = 1) {
   for (let i = 0; i < 100000000 * x; i++);
 }
 
@@ -82,12 +84,18 @@ function getLine3Elem1() {
   return pad(25, 24 - leftSide.length, leftSide);
 }
 
-function checkAndReplace(side = 'left') {
+function checkAndReplace(action = 'replace', side = 'left') {
   let arrayToBeChecked = side === 'left' ? leftSide_animals : rightSide_animals;
+  const og = arrayToBeChecked;
   for (let emojiIndex = 0; emojiIndex < user_choices.length; emojiIndex++) {
     if (arrayToBeChecked.includes(user_choices[emojiIndex])) {
       arrayToBeChecked = arrayToBeChecked.replace(user_choices[emojiIndex], ' ')
     }
+  }
+
+  if (action !== 'replace') {
+    // console.log(`|${og}| |${arrayToBeChecked.replaceAll(' ','')}| |${user_choices}|`)
+    return og.trim().length - arrayToBeChecked.replaceAll(' ', '').length === user_choices.length;
   }
 
   if (side === 'left') {
@@ -168,18 +176,6 @@ function getMidLines(boatPosition, scene = 0) {
   return [line2, line3, line4];
 }
 
-
-function check(uc, st, sc) {
-  user_choices = uc;
-  const lines = getMidLines(st, sc)
-  const ar = [];
-  for (let line = 0; line < lines.length; line++) {
-    ar.push(lines[line].join(''))
-  }
-  console.log(ar.join('\n'))
-  user_choices = ''
-}
-
 function generateGround(boatPosition = 3, scene = 0) {
   const waterGround = generateSequence(40, '☵');
   const lines = getMidLines(boatPosition, scene);
@@ -206,23 +202,23 @@ function generateGround(boatPosition = 3, scene = 0) {
 
 function formatAnimals(animals, emoji, side = 'left') {
   if (side === 'left') {
-    return leftSide_animals = animals.replaceAll(emoji, ' ').split('').sort().join('');
+    leftSide_animals = animals.replaceAll(emoji, ' ').split('').sort().join('');
+    return;
   }
-  return rightSide_animals = animals.replaceAll(emoji, ' ').split('').sort().join('');
+  rightSide_animals = animals.replaceAll(emoji, ' ').split('').sort().join('');
 }
 
 function checkAnimalPair(animals, predator, prey, side = 'left') {
   if (animals.includes(predator) && animals.includes(prey)) {
     formatAnimals(animals, prey, side);
     deathMsg = changeToEmojis(predator) + ' has eaten the ' + changeToEmojis(prey);
-    return false;
   }
 
-  return true;
+  return !deathMsg;
 }
 
 function canContinue(side = 'left') {
-  const animals = side === 'left' ? leftSide_animals : rightSide_animals;
+  const animals = (side === 'left' ? leftSide_animals : rightSide_animals).replaceAll(' ', '');
   return checkAnimalPair(animals, '1', '2', side) && checkAnimalPair(animals, '2', '3', side);
 }
 
@@ -231,7 +227,7 @@ function changeAnimals(isLeftSide = true) {
   const startScene = isLeftSide ? 1 : 9;
   const endScene = isLeftSide ? 4 : 12;
   let ground = generateGround(boatPosition, startScene);
-  checkAndReplace(isLeftSide ? 'left' : 'right');
+  checkAndReplace('replace', isLeftSide ? 'left' : 'right');
   console.clear();
   for (let i = startScene + 1; i < endScene + 1; i++) {
     console.log(ground);
@@ -242,26 +238,26 @@ function changeAnimals(isLeftSide = true) {
   return ground;
 }
 
-function randomStrip(level = 'easy') {
+function randomStrip(level = 1) {
   switch (level) {
-    case 'easy':
-      const index = Math.floor(Math.random() * easyStrips.length + 1) - 1;
-      return easyStrips[index];
-    case 'medium':
-      return mediumStrips[Math.round(Math.random() * mediumStrips.length)];
+    case 1:
+      return easyStrips[Math.floor(Math.random() * easyStrips.length + 1) - 1];
+    case 2:
+      return mediumStrips[Math.floor(Math.random() * mediumStrips.length + 1) - 1];
     default:
-      return hardStrips[Math.round(Math.random() * hardStrips.length)];
+      choice_limit = 3;
+      return hardStrips[Math.floor(Math.random() * hardStrips.length + 1) - 1];
   }
 }
 
-function isValidChoice(animalSet) {
+function isValidChoice(animalSet, side) {
   if (user_choices.length > choice_limit || user_choices.length < 1) {
     console.log('\n');
     console.log("  Your combination size must be atleast ", 1, " and atmost ", choice_limit);
     return false;
   }
 
-  if (!animalSet.split('').sort().join('').includes(user_choices.split('').sort().join(''))) {
+  if (!checkAndReplace('check', side)) {
     console.log('\n');
     console.log("  Your combination must be within this animal range : ", changeToEmojis(animalSet));
     return false;
@@ -277,12 +273,19 @@ function getChoices(animalSet, ground, isLeftSide = true) {
     delay();
     console.log('1. 🐺  \n2. 🐑  \n3. 🌳')
     user_choices = prompt("enter your combination of animal indices (separated by a comma) : ").replaceAll(',', '');
-    if (!isValidChoice(animalSet)) {
-      delay(50);
+    if (!isValidChoice(animalSet, isLeftSide ? 'left' : 'right')) {
+      delay(15);
       console.log('\n  Please re-enter your choice');
-      delay(40);
+      delay(30);
       continue;
     }
+
+    if (isLeftSide) {
+      backup_leftSide_animals = leftSide_animals;
+    } else {
+      backup_rightSide_animals = rightSide_animals;
+    }
+
     ground = changeAnimals(isLeftSide);
     console.log(ground, '\n');
 
@@ -294,12 +297,16 @@ function getChoices(animalSet, ground, isLeftSide = true) {
     canIncludeAnimals = false;
     if (isLeftSide) {
       leftSide_animals = animalSet;
-      ground = generateGround()
+      ground = generateGround();
+      console.clear();
+      console.log(ground);
       continue;
     }
 
     rightSide_animals = animalSet;
     ground = generateGround(66, 9)
+    console.clear();
+    console.log(ground);
   }
 }
 
@@ -348,7 +355,6 @@ function crossRiver(ground, direction = 'l-r', start = 8, checkingPosition = 18,
     }
     console.log(ground);
 
-    // const endingPath = 68 - user_choices.length * 2 + (user_choices.length === 2 ? 2 : -1);
     const endingPath = 68;
     delay();
     ground = generateGround(endingPath, checkingScene);
@@ -385,8 +391,74 @@ function crossRiver(ground, direction = 'l-r', start = 8, checkingPosition = 18,
   return ground;
 }
 
+function levelSelection() {
+  while (true) {
+    console.clear();
+    console.log('1. Easy Level \n2. Medium Level \n3. Hard Level')
+    const level = parseInt(prompt('\nPlease select a level :'));
+    if (level > 0 && level < 4) {
+      return level;
+    }
+    console.log('\n  please select a level within given range.\n');
+    delay(20);
+  }
+}
+
+function handleDeath(isLeftSide = true) {
+  delay(15);
+  console.log('\nSelect combination wisely.');
+  delay(30);
+  leftSide_animals = isLeftSide ? backup_leftSide_animals : leftSide_animals;
+  rightSide_animals = isLeftSide ? rightSide_animals : backup_rightSide_animals;
+  backup_leftSide_animals = isLeftSide ? '' : backup_leftSide_animals;
+  backup_rightSide_animals = isLeftSide ? backup_rightSide_animals : '';
+  user_choices = '';
+  canIncludeAnimals = false;
+  let ground = '';
+  if (!isLeftSide) {
+    ground = generateGround(66, 9);
+    ground = getChoices(rightSide_animals, ground, false);
+  }
+  deathMsg = '';
+  console.clear();
+  return ground;
+}
+
+function turnGreen(text) {
+  return "\x1B[32m" + text + "\x1B[0m";
+}
+
+function turnYellow(text) {
+  return "\x1B[33m" + text + "\x1B[0m";
+}
+
+function turnMagenta(text){
+  return "\x1B[35m" + text + "\x1B[0m";
+}
+
+function won(ground) {
+  for (let i = 0; i < 16; i++) {
+    console.log(ground);
+    console.log(`\n${pad(134, 45, turnYellow('congratualtions') + '..' + '🥳'.repeat(i % 4))}`);
+    console.log(`\n${pad(134, 55, '....' + turnGreen('Youuu '))}\n${pad(154, 55, '     ....' + turnGreen('Woooooonnn'))}`);
+    delay(5);
+    console.clear();
+  }
+
+  if(confirm('Do you want to play again?')){
+    leftSide_animals = '';
+    backup_leftSide_animals = ''
+    rightSide_animals = ''
+    backup_rightSide_animals=''
+    startGame();
+  }
+
+  console.log(`\n${pad(154, 55, turnMagenta('Have a nice day😊😊'))}`)
+}
+
 function startGame() {
-  let animalSet = randomStrip();
+  const level = levelSelection();
+  const animalSet = randomStrip(level);
   leftSide_animals = animalSet;
 
   while (true) {
@@ -394,17 +466,23 @@ function startGame() {
     ground = getChoices(leftSide_animals, ground);
     ground = crossRiver(ground);
     if (deathMsg) {
-      return;
+      handleDeath();
+      continue;
     }
+
     if (leftSide_animals.trim() === '') {
-      console.log(ground);
-      console.log('\n you won.')
+      won(ground);
       return;
     }
+
     ground = getChoices(rightSide_animals, ground, false);
     ground = crossRiver(ground, 'r-l', 61, 56);
-    if (deathMsg) {
-      return;
+    while (deathMsg) {
+      ground = handleDeath(false);
+      if (canContinue('right')) {
+        ground = crossRiver(ground, 'r-l', 61, 56);
+        continue;
+      }
     }
     console.log(ground);
   }
