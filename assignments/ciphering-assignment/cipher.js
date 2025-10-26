@@ -2,6 +2,8 @@ function encodeObject(array, index, result) {
   if (index === array.length) {
     return result + 'e';
   }
+
+  return encodeObject(array, index + 1, result + encode(array[index]))
 }
 
 function encode(jsData) {
@@ -54,6 +56,10 @@ function testAll() {
   testCipher('hello wor;d', '11:hello wor;d', true);
   testCipher('special!@#$chars', '16:special!@#$chars', true);
   testCipher([], 'le', true);
+  testCipher(["apple", 123, ["banana", -5]], 'l5:applei123el6:bananai-5eee', true);
+  testCipher(["one", ["two", ["three"]]], 'l3:onel3:twol5:threeeee', true);
+  testCipher(["", 0, []], "l0:i0elee", true);
+  testCipher([0, "", ["test"]], "li0e0:l4:testee", true);
 }
 
 testAll();
