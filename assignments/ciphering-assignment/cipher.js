@@ -3,7 +3,7 @@ function encodeObject(array, index, result) {
     return result + 'e';
   }
 
-  return encodeObject(array, index + 1, result + encode(array[index]))
+  return encodeObject(array, index + 1, result + encode(array[index]));
 }
 
 function encode(jsData) {
@@ -38,23 +38,23 @@ function formatData(data, askForIndex) {
   return data[0];
 }
 
+function dataEnd(benCode, char = 'e') {
+  return benCode.indexOf(char);
+}
+
 function decode(benCode, askForIndex = false) {
-  if (benCode[0] === 'i') {
-    const stringEndIndex = benCode.indexOf('e');
-    const data = parseInt(benCode.slice(1, stringEndIndex));
-    return formatData([data, stringEndIndex], askForIndex);
-  }
-
-  if (!isNaN(parseInt(benCode[0]))) {
-    const numberEndIndex = benCode.indexOf(':');
-    const lengthOfString = parseInt(benCode.slice(0, numberEndIndex));
-    const stringEndIndex = numberEndIndex + 1 + lengthOfString;
-    const data = benCode.slice(numberEndIndex + 1, stringEndIndex);
-    return formatData([data, stringEndIndex], askForIndex);
-  }
-
-  if (benCode[0] === 'l') {
-    return formatData(decodeObject(benCode, 1, []), askForIndex);
+  switch (!isNaN(parseInt(benCode[0]))) {
+    case true:
+      const lengthOfString = parseInt(benCode.slice(0, dataEnd(benCode, ':')));
+      const stringEndIndex = dataEnd(benCode, ':') + 1 + lengthOfString;
+      const data = benCode.slice(dataEnd(benCode, ':') + 1, stringEndIndex);
+      return formatData([data, stringEndIndex], askForIndex);
+    case false:
+      if (benCode[0] === 'i') {
+        const data = parseInt(benCode.slice(1, dataEnd(benCode)));
+        return formatData([data, dataEnd(benCode)], askForIndex);
+      }
+      return formatData(decodeObject(benCode, 1, []), askForIndex);
   }
 }
 
@@ -114,7 +114,7 @@ function testCipher(data, expected, isToEncode = true) {
   const msgExpected = isToEncode ? data : expected;
   const message = createMessage(msgData, result, msgExpected, isToEncode);
   console.log("\n" + message);
-  return !isToEncode ? '' : testCipher(data, expected, false);
+  return !isToEncode ? console.log('\n') : testCipher(data, expected, false);
 }
 
 function testAll() {
