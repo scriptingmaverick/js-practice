@@ -18,6 +18,16 @@ function encode(jsData) {
 }
 
 function decode(benCode) {
+  if (benCode[0] === 'i') {
+    const numberEndIndex = benCode.indexOf('e');
+    return parseInt(benCode.slice(1, numberEndIndex))
+  }
+
+  if (!isNaN(parseInt(benCode[0]))) {
+    const numberEndIndex = benCode.indexOf(':');
+    const lengthOfString = parseInt(benCode.slice(0, numberEndIndex));
+    return benCode.slice(numberEndIndex + 1, numberEndIndex + 1 + lengthOfString);
+  }
 
 }
 
@@ -41,7 +51,7 @@ function createDesc(data, result, isToEncode) {
   return `${data} ${serilizationType}d to => ${result}`;
 }
 
-function testCipher(data, expected, isToEncode) {
+function testCipher(data, expected, isToEncode = false) {
   const result = isToEncode ? encode(data) : decode(data);
   const message = createMessage(data, result, expected, isToEncode);
   console.log("\n" + message);
@@ -60,6 +70,13 @@ function testAll() {
   testCipher(["one", ["two", ["three"]]], 'l3:onel3:twol5:threeeee', true);
   testCipher(["", 0, []], "l0:i0elee", true);
   testCipher([0, "", ["test"]], "li0e0:l4:testee", true);
+  
+  testCipher('i123e', 123);
+  testCipher('i0e', 0);
+  testCipher('i-21e', -21);
+  testCipher('3:-21', '-21');
+  testCipher('11:hello wor;d', 'hello wor;d');
+  testCipher('16:special!@#$chars', 'special!@#$chars');
 }
 
 testAll();
