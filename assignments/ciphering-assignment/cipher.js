@@ -23,11 +23,14 @@ function decodeObject(benCode, index, result) {
   }
 
   if (benCode[index] === 'e') {
-    return decodeObject(benCode, index + 1, result)
+    if (isNaN(benCode[index - 1])) {
+      return [result, index + 1];
+    }
+    return decodeObject(benCode, index + 1, result);
   }
 
   const decodedText = decode(benCode.slice(index), true);
-  result.push(decodedText[0])
+  result.push(decodedText[0]);
   return decodeObject(benCode, index + decodedText[1], result);
 }
 
@@ -118,7 +121,8 @@ function testCipher(data, expected, isToEncode = true) {
 }
 
 function testAll() {
-  console.log("\n\t--- Quantum Leap Initiative ( Cipherin' ) ---");
+  console.clear();
+  console.log("\t--- Quantum Leap Initiative ( Cipherin' ) ---");
   testCipher('i123e', 123);
   testCipher('i0e', 0);
   testCipher('i-21e', -21);
@@ -128,9 +132,9 @@ function testAll() {
   testCipher('le', []);
   testCipher('li123ee', [123]);
   testCipher('li123ei231e4:haiee', [123, 231, 'haie']);
-  testCipher("l5:applei123el6:bananai-5eee", ["apple", 123, ["banana", -5]]);
-  testCipher("l3:onel3:twol5:threeeee", ["one", ["two", ["three"]]]);
+  testCipher("l3:onel3:twol5:threeeei8234ee", ["one", ["two", ["three"]], 8234]);
   testCipher("l0:i0elee", ['', 0, []]);
+  testCipher("l5:applei123el6:bananai-5ee3:ahai-3241eli23e3:23aei233ee", ["apple", 123, ["banana", -5], 'aha', -3241, [23, '23a'], 233]);
 }
 
 testAll();
