@@ -45,12 +45,38 @@ const seperateRuns = (runs, elem, index, array) => {
   return runs;
 };
 
+const minrun = (n) => {
+  let r = 0;
+  while (n >= 64) {
+    r |= n & 1;
+    n >>= 1;
+  }
+  return n + r;
+};
+
 const timSort = (array) => {
   // if (array.length < 32) {
   //  insertionSort(array);
   // }
-  const runs = array.reduce(seperateRuns, []).map((x) => [x[0]]);
-  console.log(runs);
+  const runs = array
+    .reduce(seperateRuns, [])
+    .map((x) => [x[0]])
+    .reverse();
+  // const minrun = minrun(array.length);
+  const minrun = 3;
+
+  let y = runs.length - 2;
+  while (y >= 0) {
+    const z = runs[y + 1];
+    const x = runs[y - 1];
+    const midArray = runs[y];
+
+    if (midArray.length <= z.length || x.length <= z.length + y.length) {
+      merge(midArray, z);
+    }
+    y--;
+  }
+  // console.log(runs);
 };
 
 const randomElement = (upper, lower) =>
@@ -64,7 +90,8 @@ const randomData = (noOfElements) => {
 
   return data;
 };
+
 const arr = randomData(randomElement(0, 10));
 console.log(arr);
-timSort([12, 56, 87, 98, 23, 46, 34, 18, 34, 12]);
+timSort(arr);
 // console.log(arr);
