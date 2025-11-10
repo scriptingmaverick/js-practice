@@ -2,10 +2,7 @@ function sort(data) {
   const sortedData = data.slice();
   for (let i = 0; i < data.length; i++) {
     if (sortedData[i] > sortedData[i + 1]) {
-      const temp = sortedData[i];
-      sortedData[i] = sortedData[i + 1];
-      sortedData[i + 1] = temp;
-      let prev_index = i;
+      let prev_index = i+1;
       while (prev_index > 0 && sortedData[prev_index] < sortedData[prev_index - 1]) {
         const temp = sortedData[prev_index];
         sortedData[prev_index] = sortedData[prev_index - 1];
