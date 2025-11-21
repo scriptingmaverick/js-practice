@@ -67,16 +67,20 @@ const createNumRect = (steps, number, color = white) => {
   return rectangle;
 };
 
-const stepsForNumber = (number) =>
-  FORMATTED_DATA.filter((elem) => elem[0] === number)[0][1];
+const stepsForNumber = (number) => {
+  const data = FORMATTED_DATA.filter((elem) => elem[0] === number);
+  console.log(data, number);
+  return data[0][1];
+};
 
 const showData = (data, [i, j, k]) => {
   const rectangles = data.map((elem, index) => {
-    if (index === i || index === j) {
-      return createNumRect(stepsForNumber(elem), elem, yellow);
-    }
-    if (index === k) {
-      return createNumRect(stepsForNumber(elem), elem, red);
+    if ([i, j, k].includes(index)) {
+      return createNumRect(
+        stepsForNumber(elem),
+        elem,
+        index === k ? red : yellow,
+      );
     }
     return createNumRect(stepsForNumber(elem), elem);
   });
@@ -133,16 +137,16 @@ function insertionSort(data) {
       while (
         prev_index > 0 && sortedData[prev_index] < sortedData[prev_index - 1]
       ) {
+        showData(sortedData, [i, prev_index - 1, prev_index]);
+        const temp = sortedData[prev_index];
+        sortedData[prev_index] = sortedData[prev_index - 1];
+        sortedData[prev_index - 1] = temp;
         prev_index--;
-        showData(sortedData,[i,i+1,prev_index])
       }
-      const temp = sortedData[prev_index];
-      sortedData[prev_index] = sortedData[prev_index - 1];
-      sortedData[prev_index - 1] = temp;
-      showData(sortedData,[i,i+1])
     }
+    showData(sortedData, [i, i + 1]);
   }
-  showData(sortedData,[-1,-1])
+  showData(sortedData, [-1, -1]);
   return sortedData;
 }
 
@@ -171,10 +175,11 @@ function testSort(noOfElements) {
   FORMATTED_DATA = [];
   PEAK_IN_DATA = 0;
   const data = randomData(noOfElements);
+  // const data = [98,66,78,73,95];
   PEAK_IN_DATA = max(data);
   FORMATTED_DATA = stepsForNumbers(data);
   const sortChoice = prompt(
-    "1. bubble sort \n 2. selection sort \n 3. insertion sort",
+    "1. Bubble Sort \n 2. Selection Sort \n 3. Insertion Sort\n 4. Merge Sort\n 5. Quick Sort\n 6. Tim Sort",
   );
   switch (parseInt(sortChoice)) {
     case 1:
@@ -183,6 +188,12 @@ function testSort(noOfElements) {
       return selectionSort(data);
     case 3:
       return insertionSort(data);
+    case 4:
+      return mergeSort(data);
+    case 5:
+      return quickSort(data);
+    default:
+      return timSort(data);
   }
 }
 
