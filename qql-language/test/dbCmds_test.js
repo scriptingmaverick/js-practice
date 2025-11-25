@@ -3,7 +3,11 @@ import {
   executeDbCommands,
   parseInputInsideParenthesis,
 } from "../src/commands.js";
-import { createNewTable, showData } from "../src/executableCommands.js";
+import {
+  createNewTable,
+  insertNewRecord,
+  showData,
+} from "../src/executableCommands.js";
 
 function red(text) {
   return "\x1B[31m" + text + "\x1B[0m";
@@ -77,7 +81,7 @@ Deno.test("testing create cmd validation", () => {
 });
 
 Deno.test("testing create cmd validation by giving wrong datatype", () => {
-  assertEquals( 
+  assertEquals(
     executeDbCommands(`create table xyz (id int,
        name vachar(20),
        ); `),
@@ -109,7 +113,10 @@ Deno.test("creating a table", () => {
 });
 
 Deno.test("displaying data of a table", () => {
-  assertEquals(showData("new_table",['id']));
+  assertEquals(showData("new_table", ["id", "name"]), [
+    ["id", "1", "2", "3"],
+    ["name", "fgn", "fsgs", "dgaed"],
+  ]);
 });
 
 Deno.test("testing select command with error", () => {
@@ -122,9 +129,32 @@ Deno.test("testing select command with error", () => {
 });
 
 Deno.test("testing select command with incorrect command", () => {
-  assertEquals(executeDbCommands("select id frm new_table;"), `\nInvalid Syntax : ${blue('frm')} not found.\n`);
+  assertEquals(
+    executeDbCommands("select id frm new_table;"),
+    `\nInvalid Syntax : ${blue("frm")} not found.\n`
+  );
 });
 
-// Deno.test("testing select command", () => {
-//   assertEquals(executeDbCommands("select id, name from new_table;"), "\nid\n");
-// });
+Deno.test("testing select command with wrong column name", () => {
+  assertEquals(
+    executeDbCommands("select id, nme from new_table;"),
+    "\nInvalid Syntax : \x1b[34mnme\x1b[0m is not present on table\n"
+  );
+});
+
+Deno.test("testing select command", () => {
+  assertEquals(executeDbCommands("select id, name from new_table;"), [
+    ["id", "1", "2", "3"],
+    ["name", "fgn", "fsgs", "dgaed"],
+  ]);
+});
+
+Deno.test("test inserting values", () => {
+  assertEquals(insertNewRecord("new_table", "name", 'sendhil'),'inserted succesfully.');
+});
+
+Deno.test("test inserting values", () => {
+  assertEquals(
+    executeDbCommands('insert into new_table (id, name) values (10,"sendhil");'),'inserted succesfully.'
+  );
+});

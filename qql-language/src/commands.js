@@ -1,6 +1,11 @@
 import { buildMessage } from "jsr:@std/internal@^1.0.12/build-message";
 import { commandsSpecifics } from "./help_data.js";
-import { createNewTable, filterData, showData } from "./executableCommands.js";
+import {
+  createNewTable,
+  filterData,
+  insertNewRecord,
+  showData,
+} from "./executableCommands.js";
 
 function red(text) {
   return "\x1B[31m" + text + "\x1B[0m";
@@ -21,7 +26,7 @@ function cyan(text) {
   return "\x1B[36m" + text + "\x1B[0m";
 }
 
-const error = [];
+export const error = [];
 const og_dataTypes = ["int", "varchar", "char"];
 
 export const createCommandLineValidation = (input) => {
@@ -41,7 +46,7 @@ export const createCommandLineValidation = (input) => {
 };
 
 export const createCommandDataValidation = (formattedInput) => {
-  const variables = parseInputInsideParenthesis(formattedInput).values;
+  const variables = parseInputInsideParenthesis(formattedInput).values; 
   const fields = [];
   for (let i = 0; i < variables.length; i++) {
     const [type, name] = variables[i].trim().split(" ").reverse();
@@ -93,10 +98,8 @@ const commandsWithOpes = {
 
     return false;
   },
-  select: (input) => {
-    return selectCommandValidation(input);
-  },
-  insert: (input) => insertCommandValidation(input),
+  select: (input) => selectCommandValidation(input.split(";")[0]),
+  insert: (input) => insertCommandValidation(input.split(";")[0]),
   delete: (input) => deleteCommandValidation(input),
   drop: (input) => dropCommandValidation(input),
   update: (input) => updateCommandValidation(input),
@@ -128,12 +131,12 @@ const createCommandValidation = (input) => {
   return tableName;
 };
 
-const selectCommandValidation = (input) => {
-  const formattedInput = input.split(";")[0];
+const selectCommandValidation = (formattedInput) => {
   const splitWithF = formattedInput
     .split("f")
     .flatMap((x) => x.split(" ").flatMap((x) => x.split(",")))
     .filter((x) => x.trim() !== "");
+
   let indexOfFrom = 0;
   for (let i = 0; i < splitWithF.length; i++) {
     if (splitWithF[i].includes("rom") || splitWithF[i].includes("rm")) {
@@ -141,6 +144,7 @@ const selectCommandValidation = (input) => {
       break;
     }
   }
+
   const requiredFields = splitWithF.slice(1, indexOfFrom);
   const tableName = splitWithF.slice(indexOfFrom + 1)[0];
   const rawSyntax = commandsSpecifics["select"].syntax.split(";")[0].slice(13);
@@ -148,6 +152,7 @@ const selectCommandValidation = (input) => {
     .replace("*/[column1, column2]", requiredFields.join(","))
     .replace("table_name", tableName)
     .split(" ");
+
   const splittedInput = (
     splitWithF[0] +
     " " +
@@ -155,7 +160,8 @@ const selectCommandValidation = (input) => {
     " f" +
     splitWithF.slice(indexOfFrom, indexOfFrom + 2).join(" ")
   ).split(" ");
-  const conditions = splitWithF.slice(indexOfFrom + 2);
+
+  const conditions = splitWithF.slice(indexOfFrom + 2).join("");
   for (let i = 0; i < splittedInput.length; i++) {
     if (splittedInput[i] !== syntax[i]) {
       error[0] = blue(splittedInput[i]) + " not found.";
@@ -167,6 +173,60 @@ const selectCommandValidation = (input) => {
     return filterData(tableName, requiredFields, conditions);
   }
   return showData(tableName, requiredFields);
+};
+
+const insertCommandValidation = (input) => {
+  let cmdLine = "";
+  let fields = "";
+  let values = "";
+  let isFieldStarted = false;
+  let isFieldsEnded = false;
+  let isValuesStarted = false;
+  for (let i = 0; i < input.length; i++) {
+    if (input[i] === "(" && !isFieldStarted) {
+      isFieldStarted = true;
+      continue;
+    } else if (input[i] === "(") {
+      isValuesStarted = true;
+      continue;
+    }
+
+    if (input[i] === ")" && !isFieldsEnded) {
+      isFieldsEnded = true;
+      continue;
+    } else if (input[i] === ")") continue;
+
+    cmdLine +=
+      !isFieldStarted || (isFieldsEnded && !isValuesStarted) ? input[i] : "";
+    fields += isFieldStarted && !isFieldsEnded ? input[i] : "";
+    values += isValuesStarted ? input[i] : "";
+  }
+  const indexOfSpaceInField = fields.indexOf(" ");
+  if (
+    indexOfSpaceInField > 0 &&
+    !fields.slice(0, indexOfSpaceInField).includes(",")
+  ) {
+    error[0] = "fields must be separated by commas(,).";
+    return;
+  }
+
+  cmdLine = cmdLine.split(" ").filter((x) => x.trim() !== "");
+  const tableName = cmdLine[2];
+  const rawSyntax = commandsSpecifics.insert.syntax.split(";")[0].slice(13);
+  const syntax = rawSyntax
+    .replace("column1, column2", fields)
+    .replace("table_name", tableName)
+    .replace("value1, value2", values)
+    .split(" ");
+  const extraInput = input.split(" ");
+  for (let i = 0; i < syntax.length; i++) {
+    if (syntax[i] !== extraInput[i]) {
+      error[0] = blue(extraInput[i]) + " is not found.";
+      return;
+    }
+  }
+
+  return insertNewRecord(tableName, fields, values.replaceAll('"','').replaceAll("'",""));
 };
 
 export const executeDbCommands = (input) => {
@@ -183,8 +243,8 @@ export const executeDbCommands = (input) => {
     }
   }
   const result = commandsWithOpes[cmd](input);
-
   if (!result) return "\nInvalid Syntax : " + error[0] + "\n";
+
   return result;
 };
 
