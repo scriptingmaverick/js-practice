@@ -46,7 +46,7 @@ export const createCommandLineValidation = (input) => {
 };
 
 export const createCommandDataValidation = (formattedInput) => {
-  const variables = parseInputInsideParenthesis(formattedInput).values; 
+  const variables = parseInputInsideParenthesis(formattedInput).values;
   const fields = [];
   for (let i = 0; i < variables.length; i++) {
     const [type, name] = variables[i].trim().split(" ").reverse();
@@ -131,7 +131,7 @@ const createCommandValidation = (input) => {
   return tableName;
 };
 
-const selectCommandValidation = (formattedInput) => {
+export const selectCommandValidation = (formattedInput) => {
   const splitWithF = formattedInput
     .split("f")
     .flatMap((x) => x.split(" ").flatMap((x) => x.split(",")))
@@ -161,18 +161,15 @@ const selectCommandValidation = (formattedInput) => {
     splitWithF.slice(indexOfFrom, indexOfFrom + 2).join(" ")
   ).split(" ");
 
-  const conditions = splitWithF.slice(indexOfFrom + 2).join("");
+  const conditions = splitWithF.slice(indexOfFrom + 2);
   for (let i = 0; i < splittedInput.length; i++) {
     if (splittedInput[i] !== syntax[i]) {
       error[0] = blue(splittedInput[i]) + " not found.";
       return;
     }
   }
-
-  if (conditions) {
-    return filterData(tableName, requiredFields, conditions);
-  }
-  return showData(tableName, requiredFields);
+  
+  return showData(tableName, requiredFields,conditions);
 };
 
 const insertCommandValidation = (input) => {
@@ -226,7 +223,11 @@ const insertCommandValidation = (input) => {
     }
   }
 
-  return insertNewRecord(tableName, fields, values.replaceAll('"','').replaceAll("'",""));
+  return insertNewRecord(
+    tableName,
+    fields,
+    values.replaceAll('"', "").replaceAll("'", "")
+  );
 };
 
 export const executeDbCommands = (input) => {
