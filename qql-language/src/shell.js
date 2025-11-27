@@ -5,7 +5,7 @@ export const executeShell = (input) => {
   const [mainCmd, cmdToUse = "--all", ...rest] = input.split(" ");
   switch (mainCmd) {
     case "exit":
-      return;
+      return 'exit';
     case "help": {
       let result;
       if (cmdToUse === "--all") {
@@ -42,6 +42,9 @@ export const runShell = () => {
     }
 
     const result = executeShell(input);
+    if (result === 'exit') {
+      return;
+    }
     if (!result) {
       continue;
     }

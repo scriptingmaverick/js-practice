@@ -1,7 +1,7 @@
 import { error } from "./commands.js";
 
-const SCHEMA_DIRECTORY = "../table_schemas";
-const TABLE_DIRECTORY = "../tables";
+const SCHEMA_DIRECTORY = "./table_schemas";
+const TABLE_DIRECTORY = "./tables";
 
 function red(text) {
   return "\x1B[31m" + text + "\x1B[0m";
@@ -22,7 +22,7 @@ const createSchema = (tableName, fields) => {
 
   Deno.writeTextFileSync(
     `${SCHEMA_DIRECTORY}/${tableName}.txt`,
-    schema.join("\n")
+    schema.join("\n"),
   );
 };
 
@@ -30,7 +30,7 @@ const createTable = (tableName, fields) => {
   const makeFields = fields.map((field) => field.name);
   Deno.writeTextFileSync(
     `${TABLE_DIRECTORY}/${tableName}.txt`,
-    makeFields.join("\t")
+    makeFields.join("\t"),
   );
 };
 
@@ -50,6 +50,16 @@ export const createNewTable = (tableName, fields) => {
 
   return blue(tableName) + " is created successfully.";
 };
+
+const allFields = (data, fields, indexOfRequiredValue) =>
+  Object.values(data).map(
+    (x, i) => `${fields[i]}: ${x[indexOfRequiredValue]}`,
+  );
+
+const specificFields = (fieldStores, requiredFields, fields) =>
+  Object.values(fieldStores).filter((x, i) =>
+    requiredFields.includes(fields[i])
+  ).map((x, i) => `${requiredFields[i]} : [ ${x} ]`);
 
 export const showData = (tableName, requiredFields, conditions = []) => {
   const tablePath = `${TABLE_DIRECTORY}/${tableName}`;
@@ -87,15 +97,12 @@ export const showData = (tableName, requiredFields, conditions = []) => {
     }
   }
 
+  // if (requiredFields[0] === "*") {
   if (conditions.length > 2) {
-    return filterData(fields, fieldStores, conditions);
+    return filterData(fields, fieldStores, conditions,requiredFields);
   }
 
-  const dataToReturn = Object.values(fieldStores).filter((x, i) =>
-    requiredFields.includes(fields[i])
-  );
-
-  return dataToReturn.map((x, i) => `${requiredFields[i]} : [ ${x} ]`);
+  return specificFields(fieldStores,requiredFields,fields)
 };
 
 export const insertNewRecord = (tableName, fields, data) => {
@@ -139,22 +146,22 @@ export const insertNewRecord = (tableName, fields, data) => {
   for (let i = 0; i < fieldsHad.length; i++) {
     let isFound = -1;
     const default_value = schema
-      .filter((x) => x[0] === fieldsHad[i])[0][1]
-      .includes("char")
+        .filter((x) => x[0] === fieldsHad[i])[0][1]
+        .includes("char")
       ? ""
       : 0;
     for (let j = 0; j < fieldsToStore.length; j++) {
       if (fieldsToStore[j] === fieldsHad[i]) isFound = j;
     }
     dataToStoreInFile.push(
-      isFound === -1 ? default_value : dataToStore[isFound]
+      isFound === -1 ? default_value : dataToStore[isFound],
     );
   }
 
   Deno.writeTextFileSync(
     `${TABLE_DIRECTORY}/${tableName}.txt`,
     `\n${dataToStoreInFile.join("\t")}`,
-    { append: true }
+    { append: true },
   );
 
   return "inserted succesfully.";
@@ -162,7 +169,7 @@ export const insertNewRecord = (tableName, fields, data) => {
 
 export const deleteARecord = (tableName, threshold) => {};
 
-export const filterData = (fields, data, condition) => {
+export const filterData = (fields, data, condition,returnableFields = ['*']) => {
   if (condition[0] !== "where") {
     error[0] = blue(condition[0]) + " is not found.";
     return;
@@ -175,7 +182,7 @@ export const filterData = (fields, data, condition) => {
   }
 
   const indexOfRequiredValue = data[indexOfFieldToCheck].indexOf(
-    condition[3].replaceAll('"', "").replaceAll("'", "")
+    condition[3].replaceAll('"', "").replaceAll("'", ""),
   );
 
   if (indexOfRequiredValue === -1) {
@@ -183,11 +190,10 @@ export const filterData = (fields, data, condition) => {
     return;
   }
 
-  const dataToReturn = Object.values(data).map(
-    (x, i) => `${fields[i]}: ${x[indexOfRequiredValue]}`
-  );
-
-  return dataToReturn;
+  if (returnableFields[0] === '*') {
+    return allFields(data,fields,indexOfRequiredValue)
+  }
+  return specificFields(data,returnableFields,fields)
 };
 
 export const deleteTable = (tableName) => {};
