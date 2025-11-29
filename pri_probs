@@ -1,0 +1,16 @@
+grep -o '[^.].*'
+
+
+o/p : any chr, .   .kf ->   .kf, .kk -> kk
+
+
+
+ grep '^[]$'
+
+o/p : error
+
+ grep '^$as$^'
+
+
+ grep '\1\([he]\)'
+o/p : error

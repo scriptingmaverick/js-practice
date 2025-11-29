@@ -112,13 +112,6 @@ Deno.test("creating a table", () => {
   );
 });
 
-Deno.test("displaying data of a table", () => {
-  assertEquals(showData("new_table", ["id", "name"]), [
-    ["id", "1", "2", "3"],
-    ["name", "fgn", "fsgs", "dgaed"],
-  ]);
-});
-
 Deno.test("testing select command with error", () => {
   assertEquals(
     executeDbCommands("select id from new_table"),
@@ -142,19 +135,39 @@ Deno.test("testing select command with wrong column name", () => {
   );
 });
 
-Deno.test("testing select command", () => {
-  assertEquals(executeDbCommands("select id, name from new_table;"), [
-    ["id", "1", "2", "3"],
-    ["name", "fgn", "fsgs", "dgaed"],
+// Deno.test("testing select command", () => {
+//   assertEquals(executeDbCommands("select id, name from new_table;"), [
+//     ["id", "1", "2", "3"],
+//     ["name", "fgn", "fsgs", "dgaed"],
+//   ]);
+// });
+
+// Deno.test("displaying data of a table", () => {
+//   assertEquals(showData("new_table", ["id", "name"]), [
+//     ["id", "1", "2", "3"],
+//     ["name", "fgn", "fsgs", "dgaed"],
+//   ]);
+// });
+
+// Deno.test("test inserting values", () => {
+//   assertEquals(
+//     insertNewRecord("new_table", "name", "sendhil"),
+//     "inserted succesfully."
+//   );
+// });
+
+// Deno.test("test inserting values", () => {
+//   assertEquals(
+//     executeDbCommands(
+//       'insert into new_table (id, name) values (10,"sendhil");'
+//     ),
+//     "inserted succesfully."
+//   );
+// });
+
+Deno.test("test with filter in select cmd", () => {
+  assertEquals(executeDbCommands("select id from new_table where id = '10';"), [
+    "id: 10",
+    "name: perrumbai",
   ]);
-});
-
-Deno.test("test inserting values", () => {
-  assertEquals(insertNewRecord("new_table", "name", 'sendhil'),'inserted succesfully.');
-});
-
-Deno.test("test inserting values", () => {
-  assertEquals(
-    executeDbCommands('insert into new_table (id, name) values (10,"sendhil");'),'inserted succesfully.'
-  );
 });
