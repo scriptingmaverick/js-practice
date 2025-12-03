@@ -3,6 +3,7 @@ import {
   executeDbCommands,
   parseInputInsideParenthesis,
 } from "../src/commands.js";
+
 import {
   createNewTable,
   insertNewRecord,

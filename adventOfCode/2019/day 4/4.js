@@ -48,17 +48,17 @@ const isValidcodeForpart2 = (code) => {
   if (code.length > 6 || code.length < 6) return;
   const adjacentValues = {};
   let i = 0;
-  while (i < code.length-1) {
+  while (i < code.length - 1) {
     if (+code[i] > +code[i + 1]) return;
     if (+code[i] === +code[i + 1]) {
       adjacentValues[+code[i]] = (adjacentValues[+code[i]] || 1) + 1;
     }
     i++;
   }
-  // console.log(adjacentValues)
+  console.log(adjacentValues);
   const repetitions = Object.values(adjacentValues);
   if (repetitions.length < 1) return;
-  if (repetitions.length >= 2 || repetitions[0] <= 2) return code;
+  if (repetitions.indexOf(2) !== -1) return code;
 };
 
 const part_2 = (range) => {
@@ -76,4 +76,4 @@ const part_2 = (range) => {
 // console.log(part_2('123444-123444'));
 // console.log(part_2('111122-111123'));
 
-console.log(part_2('183564-657474'))
+console.log(part_2("183564-657474"));
