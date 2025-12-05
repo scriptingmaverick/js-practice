@@ -1,4 +1,4 @@
-const DIGITS = "01234";
+const DIGITS = "56789";
 
 const randomIndex = (arr) => Math.floor(Math.random() * arr.length);
 

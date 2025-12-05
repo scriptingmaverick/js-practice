@@ -1,4 +1,35 @@
-let inputsIndex = 0;
+const initializeAmplifiers = (rawMemory, phase) => [{
+  memory: rawMemory.slice(),
+  result: 0,
+  pointer: 0,
+  inputs: [phase[0], 0],
+  inputInd: 0,
+}, {
+  memory: rawMemory.slice(),
+  result: 0,
+  inputInd: 0,
+  pointer: 0,
+  inputs: [phase[1], 0],
+}, {
+  memory: rawMemory.slice(),
+  result: 0,
+  inputInd: 0,
+  pointer: 0,
+  inputs: [phase[2], 0],
+}, {
+  memory: rawMemory.slice(),
+  result: 0,
+  inputInd: 0,
+  pointer: 0,
+  inputs: [phase[3], 0],
+}, {
+  memory: rawMemory.slice(),
+  inputInd: 0,
+  result: 0,
+  pointer: 0,
+  inputs: [phase[4], 0],
+}];
+
 const applyModes = (modes, arr, pointer, threshold) => {
   const indices = [];
   for (let i = 1; i <= threshold; i++) {
@@ -21,13 +52,14 @@ const isLessThan = (number1, number2) => number1 < number2;
 
 const storeInput = (arr, modes, result) => {
   const index = applyModes(modes, arr, result.pointerPos, 1)[0];
-  arr[index] = result.inputs[inputsIndex++];
+  arr[index] = result.inputs[result.inputInd++];
   result.pointerPos += 2;
 };
 
 const showData = (arr, modes, result) => {
   const index = applyModes(modes, arr, result.pointerPos, 1);
-  result.storage = arr[index];
+  console.log("storing : ", arr[index]);
+  result.storage[0] = arr[index];
   result.pointerPos += 2;
 };
 
@@ -50,8 +82,7 @@ const perform = (func, memory, modes, result) => {
   result.pointerPos += 4;
 };
 
-export const sprint = (corruptedMemory, inputs) => {
-  const storage = [];
+export const sprint = (corruptedMemory, inputs, pointer = 0, inputInd) => {
   const rawMemory = corruptedMemory.split(",");
   const execute = {
     1: (result, memory, modes) => perform(add, memory, modes, result),
@@ -67,74 +98,105 @@ export const sprint = (corruptedMemory, inputs) => {
 
   const memory = rawMemory.map((x) => parseInt(x));
 
-  // console.log("mem : ", memory, "\ninp :", inputs, "\nstorage : ", storage);
   const result = {
-    pointerPos: 0,
+    pointerPos: pointer,
     canContinue: true,
     inputs,
-    storage,
+    storage: [],
+    inputInd,
   };
 
   while (result.pointerPos < memory.length && result.canContinue) {
     const cmd = memory[result.pointerPos].toString().padStart(5, "0");
     const modes = cmd.slice(0, 3).split("").reverse();
     execute[cmd.at(-1)](result, memory, modes);
+    if (cmd.at(-1) === "4") {
+      return [{
+        result: +result.storage[0],
+        pointer: +result.pointerPos,
+        memory: memory.join(","),
+        inputs,
+        inputInd: 1,
+      }, false];
+    }
   }
-  inputsIndex = 0;
-  return result.storage;
+
+  return [{
+    result: +result.storage[0],
+    pointer: +result.pointerPos,
+    memory: memory.join(","),
+    inputs,
+    inputInd: 1,
+  }, true];
 };
 
-const amplify = (memory, signal, prevResult) => {
-  for (let i = 0; i < signal.length; i++) {
-    const mem = memory.slice();
-    const inputs = [+signal[i], prevResult];
-    prevResult = sprint(mem, inputs);
+const amplify = (rawMemory, phase) => {
+  const amplifiers = initializeAmplifiers(rawMemory, phase);
+  let i = 0;
+  while (i < phase.length) {
+    const prevObj = i > 0 ? amplifiers[i - 1] : amplifiers[4];
+    const prevResult = isNaN(prevObj.result)
+      ? prevObj.inputs[1]
+      : prevObj.result;
+    const result = sprint(
+      amplifiers[i].memory,
+      [+amplifiers[i].inputs[0], prevResult],
+      amplifiers[i].pointer,
+      amplifiers[i].inputInd,
+    );
+    amplifiers[i] = result[0];
+    if (!result[1]) {
+      i++;
+      i = i % 5;
+      continue;
+    } else if (i === 4) break;
+    i++;
   }
 
-  return prevResult;
+  return amplifiers.at(-1).inputs[1];
 };
 
-const ampliyCircuit = (rawMemory) => {
+const amplifyCircuit = (rawMemory) => {
   const signals = Deno.readTextFileSync("permutations.txt").split("\n")
     .map((x) => x.split(""));
   const thrusterOutputs = [];
   for (let i = 0; i < signals.length; i++) {
-    thrusterOutputs.push(amplify(rawMemory, signals[i], 0));
+    thrusterOutputs.push(amplify(rawMemory, signals[i]));
   }
 
   console.log(thrusterOutputs, Math.max(...thrusterOutputs));
 };
 
 const input = Deno.readTextFileSync("input.txt");
-// console.log(input )
-ampliyCircuit(input);
+amplifyCircuit(input);
 
-// ampliyCircuit(
-//   "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0",
+// amplifyCircuit(
+//   "3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10"
 // );
 
-// ampliyCircuit(
-//   "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0",
+// amplifyCircuit(
+//   "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5",
 // );
 
-// ampliyCircuit(
-//   "3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0",
+// console.log(
+//   amplify(
+//     "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5",
+//     ["9", "8", "7", "6", "5"],
+//   ),
 // );
 
-// console.log(amplify(
-//   "3,23,3,24,1002,24,10,24,1002,23,-1,23,101,5,23,23,1,24,23,23,4,23,99,0,0",
-//   ["0", "1", "2", "3", "4"],
-//   0,
-// ));
+// console.log(
+//   amplify(
+//     "3,52,1001,52,-5,52,3,53,1,52,56,54,1007,54,5,55,1005,55,26,1001,54,-5,54,1105,1,12,1,53,54,53,1008,54,0,55,1001,55,1,55,2,53,55,53,4,53,1001,56,-1,56,1005,56,6,99,0,0,0,0,10",
+//     ["9", "7", "8", "5", "6"],
+//   ),
+// );
 
-// console.log(amplify(
-//   "3,15,3,16,1002,16,10,16,1,16,15,15,4,15,99,0,0",
-//   ["4", "3", "2", "1", "0"],
-//   0,
-// ));
-
-// console.log(amplify(
-//   "3,31,3,32,1002,32,10,32,1001,31,-2,31,1007,31,0,33,1002,33,7,33,1,33,31,31,1,32,31,31,4,31,99,0,0,0",
-//   ["1", "0", "4", "3", "2"],
-//   0,
-// ));
+// console.log(
+//   sprint(
+//     "3,26,1001,26,-4,26,3,27,1002,27,2,27,1,27,26,27,4,27,1001,28,-1,28,1005,28,6,99,0,0,5",
+//     [9, 0],
+//     0,
+//     0,
+//   ),
+// );
