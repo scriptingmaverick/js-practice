@@ -145,6 +145,7 @@ const amplify = (rawMemory, phase) => {
       amplifiers[i].inputInd,
     );
     amplifiers[i] = result[0];
+
     if (!result[1]) {
       i++;
       i = i % 5;
