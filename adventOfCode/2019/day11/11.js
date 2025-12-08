@@ -1,15 +1,10 @@
+let relativeBase = 0;
 const compass = {
   N: { 1: "E", 0: "W", offset: [0, 1] },
   E: { 1: "S", 0: "N", offset: [1, 0] },
   S: { 1: "W", 0: "E", offset: [0, -1] },
   W: { 1: "N", 0: "S", offset: [-1, 0] },
 };
-
-const outputs = [];
-const grid = [];
-let outputIndex = 0;
-let relativeBase = 0;
-
 const applyModes = (modes, arr, pointer, threshold) => {
   const indices = [];
   for (let i = 1; i <= threshold; i++) {
@@ -25,6 +20,7 @@ const applyModes = (modes, arr, pointer, threshold) => {
         break;
     }
   }
+
   for (let i = 0; i < indices.length; i++) {
     if (!arr[indices[i]]) arr[indices[i]] = 0;
   }
@@ -49,10 +45,12 @@ const storeInput = (input, arr, modes, result) => {
   result.pointerPos += 2;
 };
 
+const outputs = [];
+let outputIndex = 0;
 const showData = (arr, modes, result) => {
   const index = applyModes(modes, arr, result.pointerPos, 1)[0];
-  outputs[outputIndex++] = arr[index];
   result.pointerPos += 2;
+  outputs[outputIndex++] = arr[index];
 };
 
 const jmp = (func, memory, modes, result) => {
@@ -82,12 +80,11 @@ const changeBase = (result, memory, modes) => {
 
 export const intCode = (
   program,
-  input = 1,
+  input = 0,
   pointer = 0,
-  opIndex = 0,
 ) => {
   const rawMemory = program.split(",");
-  outputIndex = opIndex;
+  outputIndex = 0;
   const execute = {
     "01": (result, memory, modes) => perform(add, memory, modes, result),
     "02": (result, memory, modes) => perform(mul, memory, modes, result),
@@ -112,48 +109,56 @@ export const intCode = (
     const cmd = memory[result.pointerPos].toString().padStart(5, "0");
     const modes = cmd.slice(0, 3).split("").reverse();
     execute[cmd.slice(3, 5)](result, memory, modes);
+    console.log("memory -> ", memory);
+    console.log("pointer -> ", result.pointerPos);
+    console.log("o/p -> ", outputs);
     if (outputIndex === 2) {
-      console.log(result.pointerPos, outputs);
-      return { pointer: result.pointerPos, outputs };
+      return { pointer: result.pointerPos, outputs, program: memory };
     }
   }
 
   return "halted";
 };
 
-const moveRobot = ([color, turn], path, lastKey) => {
-  const [x, y] = lastKey.split(",").map((x) => +x);
-  const direction = path[lastKey].facing;
-  const newDirection = compass[direction][turn];
-  const offset = compass[direction].offset;
-  const newKey = `${x + offset[0]},${y + offset[1]}`;
-  const lastStepCount = path[lastKey].steps;
-  path[newKey] = { steps: lastStepCount + 1, facing: newDirection };
-  return newKey;
-};
-
 const runRobot = (program) => {
-  let input = 0;
-  let pointer = 0;
-  let result = intCode(program, input, pointer, 0);
-  let lastPostion = "0,0";
-  const roboPath = { "0,0": { steps: "1", facing: "N" } };
-  while (result !== "halted") {
+  let [input, pointer] = [0, 0];
+  let [lastKey, direction] = ["0,0", "N"];
+  const paintedLocs = {};
+  let result = intCode(program);
+  while (typeof result === "object") {
+    console.log("result -> ", result);
     pointer = result.pointer;
-    input = result.outputs[0];
-    lastPostion = moveRobot(result.outputs, roboPath, lastPostion);
-    result = intCode(program, input, pointer, 0);
-    console.log(roboPath);
+    const [color, turn] = result.outputs;
+    paintedLocs[lastKey] = {
+      color,
+    };
+
+    direction = compass[direction][turn];
+    const offSet = compass[direction].offset;
+    const [x, y] = lastKey.split(",").map((x) => +x);
+    lastKey = `${x + offSet[0]},${y + offSet[1]}`;
+    const object = paintedLocs[lastKey];
+    input = object ? object.color : 0;
+    console.log("painted locs -> ", paintedLocs);
+    result = intCode(result.program.join(""), input, pointer);
   }
 
-  return roboPath;
+  return paintedLocs;
 };
 
+const input = Deno.readTextFileSync("input.txt");
+// console.log(runRobot(input));
 console.log(
   runRobot(
-    "3,30,1008,30,0,31,1005,31,16,104,0,104,1,1105,1,0,104,1,104,0,1105,1,0,99",
+    "104,0,104,1,103,0,4,5,104,1,3,20,104,19,104,0,104,0,4,17,104,1,104,0,99",
   ),
 );
+
+// console.log(
+//   runRobot(
+//     "3,30,1008,30,0,31,1005,31,16,104,0,104,1,1105,1,0,104,1,104,0,1105,1,0,99",
+//   ),
+// );
 
 // const input = Deno.readTextFileSync("input.txt");
 // sprint(input);
