@@ -1,11 +1,4 @@
 let relativeBase = 0;
-const compass = {
-  N: { 1: "E", 0: "W", offset: [0, 1] },
-  E: { 1: "S", 0: "N", offset: [1, 0] },
-  S: { 1: "W", 0: "E", offset: [0, -1] },
-  W: { 1: "N", 0: "S", offset: [-1, 0] },
-};
-
 const applyModes = (modes, arr, pointer, threshold) => {
   const indices = [];
   for (let i = 1; i <= threshold; i++) {
@@ -21,45 +14,34 @@ const applyModes = (modes, arr, pointer, threshold) => {
         break;
     }
   }
-
   for (let i = 0; i < indices.length; i++) {
     if (!arr[indices[i]]) arr[indices[i]] = 0;
   }
-
   return indices;
 };
 
 const add = (addend, augend) => addend + augend;
-
 const mul = (multiplier, multiplicand) => multiplier * multiplicand;
-
 const isZero = (value) => value === 0;
-
 const isNotZero = (value) => !isZero(value);
-
 const areEqual = (number1, number2) => number1 === number2;
-
 const isLessThan = (number1, number2) => number1 < number2;
-
 const storeInput = (input, arr, modes, result) => {
   const index = applyModes(modes, arr, result.pointerPos, 1)[0];
   arr[index] = input;
   result.pointerPos += 2;
 };
-
 const showData = (arr, modes, result) => {
   const index = applyModes(modes, arr, result.pointerPos, 1)[0];
-  result.pointerPos += 2;
   result.outputs.push(arr[index]);
+  result.pointerPos += 2;
 };
-
 const jmp = (func, memory, modes, result) => {
   const indices = applyModes(modes, memory, result.pointerPos, 2);
   result.pointerPos = func(memory[indices[0]])
     ? memory[indices[1]]
     : result.pointerPos + 3;
 };
-
 const algebra = (func, arr, modes, result) => {
   const indices = applyModes(modes, arr, result.pointerPos, 3);
   arr[indices[2]] = func(arr[indices[0]], arr[indices[1]]) ? 1 : 0;
@@ -78,17 +60,12 @@ const changeBase = (result, memory, modes) => {
   result.pointerPos += 2;
 };
 
-export const intCode = (
-  program,
-  input = 0,
-  pointer = 0,
-) => {
-  const rawMemory = program.split(",");
+export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
+  const rawMemory = corruptedMemory.split(",");
   const execute = {
     "01": (result, memory, modes) => perform(add, memory, modes, result),
     "02": (result, memory, modes) => perform(mul, memory, modes, result),
-    "03": (result, memory, modes, input) =>
-      storeInput(input, memory, modes, result),
+    "03": (result, memory, modes) => storeInput(input, memory, modes, result),
     "04": (result, memory, modes) => showData(memory, modes, result),
     "05": (result, memory, modes) => jmp(isNotZero, memory, modes, result),
     "06": (result, memory, modes) => jmp(isZero, memory, modes, result),
@@ -109,12 +86,12 @@ export const intCode = (
   while (result.pointerPos < memory.length && result.canContinue) {
     const cmd = memory[result.pointerPos].toString().padStart(5, "0");
     const modes = cmd.slice(0, 3).split("").reverse();
-    execute[cmd.slice(3, 5)](result, memory, modes, input);
-    if (result.outputs.length === 2) {
+    execute[cmd.slice(3, 5)](result, memory, modes);
+    if (result.outputs.length === 3) {
       return {
-        pointer: result.pointerPos,
         outputs: result.outputs,
         program: memory.join(","),
+        pointer: result.pointerPos,
       };
     }
   }
@@ -122,69 +99,64 @@ export const intCode = (
   return "halted";
 };
 
-const runRobot = (program) => {
-  relativeBase = 0;
-  let [input, pointer] = [1, 0];
-  let [lastKey, direction] = ["0,0", "N"];
-  const paintedLocs = { "0,0": { color: 1 } };
-  let result = intCode(program, input);
-  while (typeof result === "object") {
+const createGameField = (program) => {
+  let pointer = 0;
+  let result = sprint(program);
+  const gameField = {};
+  while (result !== "halted") {
+    const [x, y, tileId] = result.outputs;
+    const key = `${x},${y}`;
+    gameField[key] = tileId;
     pointer = result.pointer;
-    paintedLocs[lastKey] = {
-      color: result.outputs[0],
-    };
-
-    direction = compass[direction][result.outputs[1]];
-    const offSet = compass[direction].offset;
-    const [x, y] = lastKey.split(",").map((x) => +x);
-    lastKey = `${x + offSet[0]},${y + offSet[1]}`;
-    const object = paintedLocs[lastKey];
-    input = object ? object.color : 0;
-    const formattedProgram = result.program.split(",").map((x) => +x || 0).join(
-      ",",
-    );
-    result = intCode(formattedProgram, input, pointer);
+    const newProgram = result.program.split(",").map((x) => +x || 0).join(",");
+    result = sprint(newProgram, pointer);
   }
 
-  // return Object.keys(paintedLocs).length
-  return paintedLocs;
+  return Object.values(gameField).filter((x) => x === 2).length;
 };
 
-const printRegistration = (paintedLocs) => {
-  const formattedPositions = Object.entries(paintedLocs).filter((x) =>
-    x[1].color === 1
-  ).map((e) => e[0].split(",").map((x) => +x));
+const runGame = (program) => {
+  const quarteredProgram = "2" + program.slice(1);
+  let pointer = 0;
+  let result = sprint(quarteredProgram);
+  const gameField = {};
+  let score = 0;
+  let input = 0;
+  const ballPos = { x: 0, y: 0 };
+  const paddlePos = { x: 0, y: 0 };
+  while (result !== "halted") {
+    const [x, y, tileId] = result.outputs;
+    const key = `${x},${y}`;
 
-  const xs = formattedPositions.map((x) => x[0]);
-  const ys = formattedPositions.map((x) => x[1]);
-  const minY = Math.min(...ys);
-  const minX = Math.min(...xs);
-  const maxY = Math.max(...ys);
-  const maxX = Math.max(...xs);
-  for (let i = maxY; i >= minY; i--) {
-    let row = "";
-    for (let j = minX; j <= maxX; j++) {
-      const key = `${j},${i}`;
-      row += paintedLocs[key]?.color === 1 ? "🟧" : "💚";
+    if (key === "-1,0") score = tileId;
+    else gameField[key] = tileId;
+
+    if (tileId === 4) {
+      ballPos.x = x;
+      ballPos.y = y;
+    } else if (tileId === 3) {
+      paddlePos.x = x;
+      paddlePos.y = y;
     }
-    console.log(row);
+
+    pointer = result.pointer;
+    const newProgram = result.program.split(",").map((x) => +x || 0).join(",");
+
+    if (paddlePos.x < ballPos.x) input = 1;
+    else if (paddlePos.x === ballPos.x) input = 0;
+    else input = -1;
+
+    result = sprint(newProgram, pointer, input);
   }
+
+  return score;
 };
 
 const input = Deno.readTextFileSync("input.txt");
-console.log(printRegistration(runRobot(input)));
-// console.log(runRobot(input));
-// console.log(
-//   runRobot(
-//     "104,1,104,1,4,1,104,0,104,1,104,0,104,1,104,0,104,0,104,0,99",
-//   ),
-// );
+const example = "104,1,104,2,104,2,104,3,104,0,104,4,104,5,104,5,104,2,99";
 
-// console.log(
-//   runRobot(
-//     "3,30,1008,30,0,31,1005,31,16,104,0,104,1,1105,1,0,104,1,104,0,1105,1,0,99",
-//   ),
-// );
+// console.log(createGameField(example));
 
-// const input = Deno.readTextFileSync("input.txt");
-// sprint(input);
+const example2 =
+  "104,-1,104,0,104,5,3,100,1001,100,0,100,104,2,104,3,104,3,104,4,104,3,104,4,104,-1,104,0,104,7,99";
+console.log(runGame(input));
