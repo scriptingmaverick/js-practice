@@ -6,3 +6,7 @@ export function* infiniteNums() {
 }
 
 export const range = 10;
+
+export const isEven = (x) => !(x & 1);
+export const identity = (x) => x;
+export const add = (e, x) => e + x;

@@ -1,4 +1,4 @@
-import { infiniteNums, range } from "./generator_answers.js";
+import { infiniteNums, range } from "./general_data.js";
 
 const nums = infiniteNums();
 console.log("pair permutations -> ", [

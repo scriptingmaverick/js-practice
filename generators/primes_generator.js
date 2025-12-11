@@ -1,5 +1,4 @@
-import { infiniteNums, range } from "./generator_answers.js";
-
+import { infiniteNums, range } from "./general_data.js";
 
 const isPrime = (x) => {
   for (let i = 2; i <= Math.sqrt(x); i++) {
@@ -10,6 +9,4 @@ const isPrime = (x) => {
 };
 
 const nums = infiniteNums();
-console.log("primes -> ", [
-  ...nums.filter(isPrime).take(range),
-]);
+console.log("primes -> ", [...nums.filter(isPrime).take(range)]);
