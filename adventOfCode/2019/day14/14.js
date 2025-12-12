@@ -1,10 +1,36 @@
+const isOre = (x) => x[0].includes("ORE");
+const isFuel = (x) => x[1].includes("FUEL");
+
+const parse = (substance) =>
+  substance.map((x) => x.split(" ")).map((x) => ({
+    quantity: +x[0],
+    name: x[1],
+  }));
+
+const parseReactions = (data) =>
+  data.map((x) => ({ substance: x[1], reactions: x[0].split(", ") })).map(
+    (x) => ({ substance: parse([x.substance]), reactions: parse(x.reactions) }),
+  );
+
 const parseMaterials = (rawMaterials) => {
-  return rawMaterials.split('\n').map(x=>x.split(' => '))
-}
+  const parsedData = rawMaterials.split("\n").map((x) => x.split(" => "));
+  const ores = parseReactions(parsedData.filter(isOre));
+  const fuelRequirement = parseReactions(parsedData.filter(isFuel));
+  const materials = parseReactions(
+    parsedData.filter((x) => !isFuel(x) && !isOre(x)),
+  );
+  return { ores, materials, fuelRequirement };
+};
 
 const oresRequiredForFuel = (rawMaterials) => {
-  const data = parseMaterials(rawMaterials)
-  console.log('parsed data -> ',data);
+  const { ores, materials, fuelRequirement } = parseMaterials(rawMaterials);
+
+  const reactionsWantedForOre = fuelRequirement.reactions.reduce((sum, reaction) => {
+    
+  })
+  console.log(ores);
+  console.log(materials);
+  console.log(fuelRequirement);
 };
 
 const example1 = `10 ORE => 10 A
@@ -32,5 +58,4 @@ const example3 = `157 ORE => 5 NZVS
 165 ORE => 2 GPVTF
 3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT`;
 
-
-console.log(oresRequiredForFuel(example1))
+console.log(oresRequiredForFuel(example1));

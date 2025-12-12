@@ -1,7 +1,6 @@
 import { identity, isEven } from "./general_data.js";
 
 function* partitioner(data, predicate) {
-  const buckets = [[data[0]]];
   let i = 1;
   let bucketIndex = 0;
   while (i < data.length) {
@@ -11,7 +10,6 @@ function* partitioner(data, predicate) {
       buckets[bucketIndex].push(data[i++]);
       continue;
     }
-
     yield buckets[bucketIndex++];
     buckets[bucketIndex] = [data[i++]];
   }
