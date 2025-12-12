@@ -1,36 +1,79 @@
 const isOre = (x) => x[0].includes("ORE");
 const isFuel = (x) => x[1].includes("FUEL");
+const sum = (sum, e) => sum + e;
 
-const parse = (substance) =>
-  substance.map((x) => x.split(" ")).map((x) => ({
-    quantity: +x[0],
-    name: x[1],
-  }));
+const parse = (substance) => substance.map((x) => x.split(" "));
 
 const parseReactions = (data) =>
-  data.map((x) => ({ substance: x[1], reactions: x[0].split(", ") })).map(
-    (x) => ({ substance: parse([x.substance]), reactions: parse(x.reactions) }),
-  );
+  data.reduce((obj, x) => (obj[x[1]] = x[0].split(", ")) && obj, {});
 
 const parseMaterials = (rawMaterials) => {
   const parsedData = rawMaterials.split("\n").map((x) => x.split(" => "));
+  const normalizedData = parseReactions(parsedData);
   const ores = parseReactions(parsedData.filter(isOre));
   const fuelRequirement = parseReactions(parsedData.filter(isFuel));
-  const materials = parseReactions(
+  const rest = parseReactions(
     parsedData.filter((x) => !isFuel(x) && !isOre(x)),
   );
-  return { ores, materials, fuelRequirement };
+  const materials = Object.keys(normalizedData).reduce((obj, x) => {
+    const key = parse([x])[0];
+    const value = parse(normalizedData[x]);
+    obj[key[1]] = value.map((x) => x[1]);
+    return obj;
+  }, {});
+
+  return { ores, rest, fuelRequirement, materials };
 };
 
-const oresRequiredForFuel = (rawMaterials) => {
-  const { ores, materials, fuelRequirement } = parseMaterials(rawMaterials);
+const extractOres = (ores) =>
+  ores.reduce((result, currentOre, i) => {
+    if (currentOre.dividend === ores[i + 1]?.dividend) {
+      result.similar[result.i].push(currentOre.divisor);
+      return result;
+    }
 
-  const reactionsWantedForOre = fuelRequirement.reactions.reduce((sum, reaction) => {
-    
-  })
-  console.log(ores);
-  console.log(materials);
-  console.log(fuelRequirement);
+    result.similar[result.i].push(currentOre.divisor);
+    result.similar[result.i].push(currentOre.dividend);
+    result.similar[result.i++].push(currentOre.ores);
+    result.similar[result.i] = [];
+    return result;
+  }, { similar: [[]], i: 0 }).similar.slice(0, -1);
+
+const oresRequiredForFuel = (rawMaterials) => {
+  const materialsAvailable = parseMaterials(
+    rawMaterials,
+  );
+  const fuelValues = Object.values(materialsAvailable.fuelRequirement)[0];
+  const ores = getOres(materialsAvailable, fuelValues);
+  console.log("result -> ", ores);
+  const result = extractOres(ores).map((x) => {
+    const summation = x.slice(0, -2).reduce(sum);
+    return Math.ceil(summation / x.at(-2)) * x.at(-1);
+  });
+
+  console.log(result.reduce(sum));
+};
+
+const getOres = (materialsAvailable, reactions, result = []) => {
+  result.push(reactions.reduce((ores, x) => {
+    const [divisor, key] = parse([x])[0];
+    // console.log(divisor, key);
+    if (materialsAvailable.materials[key][0] === "ORE") {
+      const requiredKey = Object.keys(materialsAvailable.ores).filter((e) =>
+        e.includes(key)
+      );
+
+      const oresRequired = +parse(materialsAvailable.ores[requiredKey])[0][0];
+      const dividend = +parse(requiredKey)[0][0];
+      ores.push({ dividend, divisor: +divisor, ores: oresRequired });
+      return ores;
+    }
+
+    ores.push(getOres(materialsAvailable, materialsAvailable.rest[x]));
+    return ores.flat();
+  }, []));
+
+  return result.flat();
 };
 
 const example1 = `10 ORE => 10 A
