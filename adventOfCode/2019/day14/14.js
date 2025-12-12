@@ -13,7 +13,7 @@ const parseMaterials = (rawMaterials) => {
   const ores = parseReactions(parsedData.filter(isOre));
   const fuelRequirement = parseReactions(parsedData.filter(isFuel));
   const rest = parseReactions(
-    parsedData.filter((x) => !isFuel(x) && !isOre(x)),
+    parsedData.filter((x) => !isFuel(x) && !isOre(x))
   );
   const materials = Object.keys(normalizedData).reduce((obj, x) => {
     const key = parse([x])[0];
@@ -25,61 +25,71 @@ const parseMaterials = (rawMaterials) => {
   return { ores, rest, fuelRequirement, materials };
 };
 
-const extractOres = (ores) =>
-  ores.reduce((result, currentOre, i) => {
-    if (currentOre.dividend === ores[i + 1]?.dividend) {
-      result.similar[result.i].push(currentOre.divisor);
-      return result;
-    }
-
-    result.similar[result.i].push(currentOre.divisor);
-    result.similar[result.i].push(currentOre.dividend);
-    result.similar[result.i++].push(currentOre.ores);
-    result.similar[result.i] = [];
-    return result;
-  }, { similar: [[]], i: 0 }).similar.slice(0, -1);
+const sort = (data) => {
+  const sortedData = {};
+  let i = 0;
+  while (i < data.length) {
+    const key = data[i++].dividend[1];
+    if (key in sortedData) continue;
+    sortedData[key] = data
+      .filter((x) => x.dividend[1] === key)
+      .reduce(
+        (result, e) => ({
+          dividend: e.dividend,
+          divisor: e.divisor + result.divisor,
+          ores: e.ores,
+        }),
+        { divisor: 0 }
+      );
+  }
+  return Object.values(sortedData);
+};
 
 const oresRequiredForFuel = (rawMaterials) => {
   const materialsAvailable = parseMaterials(rawMaterials);
-  // console.log(materialsAvailable)
   const fuelValues = Object.values(materialsAvailable.fuelRequirement)[0];
-  // console.log(fuelValues)
   const ores = getOres(materialsAvailable, fuelValues);
-  const result = extractOres(ores).map((x) => {
-    const summation = x.slice(0, -2).reduce(sum);
-    return Math.ceil(summation / x.at(-2)) * x.at(-1);
+  console.log(ores);
+  const sortedOres = sort(ores);
+  console.log(sortedOres);
+  const result = sortedOres.map((x) => {
+    return Math.ceil(x.divisor / x.dividend[0]) * x.ores;
   });
 
   return result.reduce(sum);
 };
 
 const getOres = (materialsAvailable, reactions, result = []) => {
-  // console.log(materialsAvailable,reactions)
-  result.push(reactions.reduce((ores, x) => {
-    const [divisor, key] = parse([x])[0];
-    console.log("start of reduce -> ", divisor, key);
-    if (materialsAvailable.materials[key][0] === "ORE") {
-      const requiredKey = Object.keys(materialsAvailable.ores).filter((e) =>
+  result.push(
+    reactions.reduce((ores, x) => {
+      const [divisor, key] = parse([x])[0];
+      if (materialsAvailable.materials[key][0] === "ORE") {
+        const requiredKey = Object.keys(materialsAvailable.ores).filter((e) =>
+          e.includes(key)
+        );
+
+        const oresRequired = +parse(materialsAvailable.ores[requiredKey])[0][0];
+        const [dividend, keyName] = parse(requiredKey)[0];
+        ores.push({
+          dividend: [+dividend, keyName],
+          divisor: +divisor,
+          ores: oresRequired,
+        });
+        return ores;
+      }
+
+      const requiredKey = Object.keys(materialsAvailable.rest).filter((e) =>
         e.includes(key)
       );
-
-      const oresRequired = +parse(materialsAvailable.ores[requiredKey])[0][0];
-      const dividend = +parse(requiredKey)[0][0];
-      ores.push({ dividend, divisor: +divisor, ores: oresRequired });
-      return ores;
-    }
-
-    const requiredKey = Object.keys(materialsAvailable.rest).filter((e) =>
-      e.includes(key)
-    );
-    const newReactions = materialsAvailable.rest[requiredKey].map((x) => {
-      const [dividend, key] = parse([x])[0];
-      return (+dividend * +divisor) + " " + key;
-    });
-    console.log("else -> ", newReactions);
-    ores.push(getOres(materialsAvailable, newReactions));
-    return ores.flat();
-  }, []));
+      const threshold = parse(requiredKey)[0][0];
+      const newReactions = materialsAvailable.rest[requiredKey].map((x) => {
+        const [dividend, key] = parse([x])[0];
+        return +dividend * Math.ceil(+divisor / threshold) + " " + key;
+      });
+      ores.push(getOres(materialsAvailable, newReactions));
+      return ores.flat();
+    }, [])
+  );
 
   return result.flat();
 };
@@ -109,4 +119,4 @@ const example3 = `157 ORE => 5 NZVS
 165 ORE => 2 GPVTF
 3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT`;
 
-console.log(oresRequiredForFuel(example2));
+console.log(oresRequiredForFuel(example1));
