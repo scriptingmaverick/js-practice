@@ -2,20 +2,6 @@ const isOre = (x) => x[0].includes("ORE");
 const isFuel = (x) => x[1].includes("FUEL");
 const sum = (sum, e) => sum + e;
 
-const initializeLeftOvers = (materials) =>
-  Object.keys(materials).reduce((leftOvers, x) => {
-    leftOvers[x] = 0;
-    return leftOvers;
-  }, {});
-
-const getMaterials = (normalizedData) =>
-  Object.keys(normalizedData).reduce((obj, x) => {
-    const key = parse([x])[0];
-    const value = parse(normalizedData[x]);
-    obj[key[1]] = value.map((x) => x[1]);
-    return obj;
-  }, {});
-
 const parseRawMaterials = (rawMaterials) =>
   rawMaterials.split("\n").map((x) => x.split(" => "));
 
@@ -29,30 +15,11 @@ const parseReactions = (data) =>
 
 const parseMaterials = (rawMaterials) => {
   const parsedData = parseRawMaterials(rawMaterials);
-  const normalizedData = parseReactions(parsedData);
   const ores = parseReactions(parsedData.filter(isOre));
   const fuelRequirement = parseReactions(parsedData.filter(isFuel));
   const rest = parseReactions(getRestOfTheReacions(parsedData));
-  const materials = getMaterials(normalizedData);
-  const leftOvers = initializeLeftOvers(materials);
-
-  return { ores, rest, fuelRequirement, materials, leftOvers };
+  return { ores, rest, fuelRequirement };
 };
-
-// const [divisor, reactorName] = parse(oreKey)[0];
-// const oreValue = parse(materialsAvailable.ores[oreKey])[0][0];
-// const leftOver = materialsAvailable.leftOvers[reactor];
-// const quantity = Math.ceil(+dividend / +divisor);
-// const need = quantity * +divisor - dividend;
-// console.log(dividend, divisor, need, quantity);
-// if (leftOver >= need) {
-//   materialsAvailable.leftOvers[reactor] -= need;
-// } else {
-//   materialsAvailable.leftOvers[reactor] += need;
-// }
-
-// console.log(materialsAvailable.leftOvers);
-// return { quantity, key: reactorName, ores: +oreValue };
 
 const findReactionSource = (reaction, materialsAvailable) => {
   const [dividend, reactor] = parse([reaction])[0];
@@ -67,8 +34,7 @@ const findReactionSource = (reaction, materialsAvailable) => {
   const key = Object.keys(materialsAvailable.rest).filter((x) =>
     x.includes(reactor)
   );
-
-  const [divisor, name] = parse(key)[0];
+  const divisor = parse(key)[0][0];
   const newReactions = materialsAvailable.rest[key].map((reaction) => {
     const [multiplier, reactorName] = parse([reaction])[0];
     return Math.ceil(+dividend / +divisor) * +multiplier + " " + reactorName;
@@ -86,28 +52,27 @@ const normalize = (reactions) =>
     }, {})
   ).map((x) => `${x[1]} ${x[0]}`);
 
-const trenchDownReactions = (
-  reactions,
-  materialsAvailable,
-  substancesRequired = []
-) => {
+const trenchDownReactions = (reactions, materialsAvailable) => {
   const oreKeys = Object.keys(materialsAvailable.ores).map(
     (x) => parse([x])[0][1]
   );
+
   while (!reactions.every((x) => oreKeys.includes(parse([x])[0][1]))) {
     let combinedRections = [];
     let i = 0;
+
     while (i < reactions.length) {
       const source = findReactionSource(reactions[i++], materialsAvailable);
       combinedRections = combinedRections.concat(source);
     }
     reactions = normalize(combinedRections);
   }
+
   return reactions.map((x) => parse([x])[0]);
 };
 
-const turnToOres = (reactions, ores) => {
-  const sum = reactions.reduce((sum, reaction) => {
+const turnToOres = (reactions, ores) =>
+  reactions.reduce((sum, reaction) => {
     const oreKey = Object.keys(ores).filter((x) => x.includes(reaction[1]));
     const divisor = +parse(oreKey)[0][0];
     const multiplicand = +parse(ores[oreKey])[0][0];
@@ -116,15 +81,12 @@ const turnToOres = (reactions, ores) => {
     return sum;
   }, 0);
 
-  return sum;
-};
-
 const oresRequiredForFuel = (rawMaterials) => {
   const materialsAvailable = parseMaterials(rawMaterials);
   const fuelReactions = Object.values(materialsAvailable.fuelRequirement)[0];
   const fuelSources = trenchDownReactions(fuelReactions, materialsAvailable);
   const oresRequiredForFuel = turnToOres(fuelSources, materialsAvailable.ores);
-  console.log(oresRequiredForFuel);
+  return oresRequiredForFuel;
 };
 
 const example1 = `10 ORE => 10 A
@@ -182,5 +144,5 @@ const example5 = `171 ORE => 8 CNZTR
 121 ORE => 7 VRPVC
 7 XCVML => 6 RJRHP
 5 BHXH, 4 VRPVC => 5 LTCX`;
-  
+
 console.log(oresRequiredForFuel(example5));
