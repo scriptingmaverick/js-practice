@@ -2,96 +2,129 @@ const isOre = (x) => x[0].includes("ORE");
 const isFuel = (x) => x[1].includes("FUEL");
 const sum = (sum, e) => sum + e;
 
-const parse = (substance) => substance.map((x) => x.split(" "));
+const initializeLeftOvers = (materials) =>
+  Object.keys(materials).reduce((leftOvers, x) => {
+    leftOvers[x] = 0;
+    return leftOvers;
+  }, {});
 
-const parseReactions = (data) =>
-  data.reduce((obj, x) => (obj[x[1]] = x[0].split(", ")) && obj, {});
-
-const parseMaterials = (rawMaterials) => {
-  const parsedData = rawMaterials.split("\n").map((x) => x.split(" => "));
-  const normalizedData = parseReactions(parsedData);
-  const ores = parseReactions(parsedData.filter(isOre));
-  const fuelRequirement = parseReactions(parsedData.filter(isFuel));
-  const rest = parseReactions(
-    parsedData.filter((x) => !isFuel(x) && !isOre(x))
-  );
-  const materials = Object.keys(normalizedData).reduce((obj, x) => {
+const getMaterials = (normalizedData) =>
+  Object.keys(normalizedData).reduce((obj, x) => {
     const key = parse([x])[0];
     const value = parse(normalizedData[x]);
     obj[key[1]] = value.map((x) => x[1]);
     return obj;
   }, {});
 
-  return { ores, rest, fuelRequirement, materials };
+const parseRawMaterials = (rawMaterials) =>
+  rawMaterials.split("\n").map((x) => x.split(" => "));
+
+const getRestOfTheReacions = (parsedData) =>
+  parsedData.filter((x) => !isFuel(x) && !isOre(x));
+
+const parse = (substance) => substance.map((x) => x.split(" "));
+
+const parseReactions = (data) =>
+  data.reduce((obj, x) => (obj[x[1]] = x[0].split(", ")) && obj, {});
+
+const parseMaterials = (rawMaterials) => {
+  const parsedData = parseRawMaterials(rawMaterials);
+  const normalizedData = parseReactions(parsedData);
+  const ores = parseReactions(parsedData.filter(isOre));
+  const fuelRequirement = parseReactions(parsedData.filter(isFuel));
+  const rest = parseReactions(getRestOfTheReacions(parsedData));
+  const materials = getMaterials(normalizedData);
+  const leftOvers = initializeLeftOvers(materials);
+
+  return { ores, rest, fuelRequirement, materials, leftOvers };
 };
 
-const sort = (data) => {
-  const sortedData = {};
-  let i = 0;
-  while (i < data.length) {
-    const key = data[i++].dividend[1];
-    if (key in sortedData) continue;
-    sortedData[key] = data
-      .filter((x) => x.dividend[1] === key)
-      .reduce(
-        (result, e) => ({
-          dividend: e.dividend,
-          divisor: e.divisor + result.divisor,
-          ores: e.ores,
-        }),
-        { divisor: 0 }
-      );
+// const [divisor, reactorName] = parse(oreKey)[0];
+// const oreValue = parse(materialsAvailable.ores[oreKey])[0][0];
+// const leftOver = materialsAvailable.leftOvers[reactor];
+// const quantity = Math.ceil(+dividend / +divisor);
+// const need = quantity * +divisor - dividend;
+// console.log(dividend, divisor, need, quantity);
+// if (leftOver >= need) {
+//   materialsAvailable.leftOvers[reactor] -= need;
+// } else {
+//   materialsAvailable.leftOvers[reactor] += need;
+// }
+
+// console.log(materialsAvailable.leftOvers);
+// return { quantity, key: reactorName, ores: +oreValue };
+
+const findReactionSource = (reaction, materialsAvailable) => {
+  const [dividend, reactor] = parse([reaction])[0];
+  const oreKey = Object.keys(materialsAvailable.ores).filter((key) =>
+    key.includes(reactor)
+  );
+
+  if (oreKey.length > 0) {
+    return [reaction];
   }
-  return Object.values(sortedData);
+
+  const key = Object.keys(materialsAvailable.rest).filter((x) =>
+    x.includes(reactor)
+  );
+
+  const [divisor, name] = parse(key)[0];
+  const newReactions = materialsAvailable.rest[key].map((reaction) => {
+    const [multiplier, reactorName] = parse([reaction])[0];
+    return Math.ceil(+dividend / +divisor) * +multiplier + " " + reactorName;
+  });
+
+  return newReactions;
+};
+
+const normalize = (reactions) =>
+  Object.entries(
+    reactions.reduce((sums, reaction) => {
+      const [quantity, name] = parse([reaction])[0];
+      sums[name] = (sums[name] || 0) + +quantity;
+      return sums;
+    }, {})
+  ).map((x) => `${x[1]} ${x[0]}`);
+
+const trenchDownReactions = (
+  reactions,
+  materialsAvailable,
+  substancesRequired = []
+) => {
+  const oreKeys = Object.keys(materialsAvailable.ores).map(
+    (x) => parse([x])[0][1]
+  );
+  while (!reactions.every((x) => oreKeys.includes(parse([x])[0][1]))) {
+    let combinedRections = [];
+    let i = 0;
+    while (i < reactions.length) {
+      const source = findReactionSource(reactions[i++], materialsAvailable);
+      combinedRections = combinedRections.concat(source);
+    }
+    reactions = normalize(combinedRections);
+  }
+  return reactions.map((x) => parse([x])[0]);
+};
+
+const turnToOres = (reactions, ores) => {
+  const sum = reactions.reduce((sum, reaction) => {
+    const oreKey = Object.keys(ores).filter((x) => x.includes(reaction[1]));
+    const divisor = +parse(oreKey)[0][0];
+    const multiplicand = +parse(ores[oreKey])[0][0];
+    console.log(ores[oreKey], oreKey, divisor, multiplicand, reaction);
+    sum += Math.ceil(reaction[0] / divisor) * multiplicand;
+    return sum;
+  }, 0);
+
+  return sum;
 };
 
 const oresRequiredForFuel = (rawMaterials) => {
   const materialsAvailable = parseMaterials(rawMaterials);
-  const fuelValues = Object.values(materialsAvailable.fuelRequirement)[0];
-  const ores = getOres(materialsAvailable, fuelValues);
-  console.log(ores);
-  const sortedOres = sort(ores);
-  console.log(sortedOres);
-  const result = sortedOres.map((x) => {
-    return Math.ceil(x.divisor / x.dividend[0]) * x.ores;
-  });
-
-  return result.reduce(sum);
-};
-
-const getOres = (materialsAvailable, reactions, result = []) => {
-  result.push(
-    reactions.reduce((ores, x) => {
-      const [divisor, key] = parse([x])[0];
-      if (materialsAvailable.materials[key][0] === "ORE") {
-        const requiredKey = Object.keys(materialsAvailable.ores).filter((e) =>
-          e.includes(key)
-        );
-
-        const oresRequired = +parse(materialsAvailable.ores[requiredKey])[0][0];
-        const [dividend, keyName] = parse(requiredKey)[0];
-        ores.push({
-          dividend: [+dividend, keyName],
-          divisor: +divisor,
-          ores: oresRequired,
-        });
-        return ores;
-      }
-
-      const requiredKey = Object.keys(materialsAvailable.rest).filter((e) =>
-        e.includes(key)
-      );
-      const threshold = parse(requiredKey)[0][0];
-      const newReactions = materialsAvailable.rest[requiredKey].map((x) => {
-        const [dividend, key] = parse([x])[0];
-        return +dividend * Math.ceil(+divisor / threshold) + " " + key;
-      });
-      ores.push(getOres(materialsAvailable, newReactions));
-      return ores.flat();
-    }, [])
-  );
-
-  return result.flat();
+  const fuelReactions = Object.values(materialsAvailable.fuelRequirement)[0];
+  const fuelSources = trenchDownReactions(fuelReactions, materialsAvailable);
+  const oresRequiredForFuel = turnToOres(fuelSources, materialsAvailable.ores);
+  console.log(oresRequiredForFuel);
 };
 
 const example1 = `10 ORE => 10 A
@@ -119,4 +152,35 @@ const example3 = `157 ORE => 5 NZVS
 165 ORE => 2 GPVTF
 3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT`;
 
-console.log(oresRequiredForFuel(example1));
+const example4 = `2 VPVL, 7 FWMGM, 2 CXFTF, 11 MNCFX => 1 STKFG
+17 NVRVD, 3 JNWZP => 8 VPVL
+53 STKFG, 6 MNCFX, 46 VJHF, 81 HVMC, 68 CXFTF, 25 GNMV => 1 FUEL
+22 VJHF, 37 MNCFX => 5 FWMGM
+139 ORE => 4 NVRVD
+144 ORE => 7 JNWZP
+5 MNCFX, 7 RFSQX, 2 FWMGM, 2 VPVL, 19 CXFTF => 3 HVMC
+5 VJHF, 7 MNCFX, 9 VPVL, 37 CXFTF => 6 GNMV
+145 ORE => 6 MNCFX
+1 NVRVD => 8 CXFTF
+1 VJHF, 6 MNCFX => 4 RFSQX
+176 ORE => 6 VJHF`;
+
+const example5 = `171 ORE => 8 CNZTR
+7 ZLQW, 3 BMBT, 9 XCVML, 26 XMNCP, 1 WPTQ, 2 MZWV, 1 RJRHP => 4 PLWSL
+114 ORE => 4 BHXH
+14 VRPVC => 6 BMBT
+6 BHXH, 18 KTJDG, 12 WPTQ, 7 PLWSL, 31 FHTLT, 37 ZDVW => 1 FUEL
+6 WPTQ, 2 BMBT, 8 ZLQW, 18 KTJDG, 1 XMNCP, 6 MZWV, 1 RJRHP => 6 FHTLT
+15 XDBXC, 2 LTCX, 1 VRPVC => 6 ZLQW
+13 WPTQ, 10 LTCX, 3 RJRHP, 14 XMNCP, 2 MZWV, 1 ZLQW => 1 ZDVW
+5 BMBT => 4 WPTQ
+189 ORE => 9 KTJDG
+1 MZWV, 17 XDBXC, 3 XCVML => 2 XMNCP
+12 VRPVC, 27 CNZTR => 2 XDBXC
+15 KTJDG, 12 BHXH => 5 XCVML
+3 BHXH, 2 VRPVC => 7 MZWV
+121 ORE => 7 VRPVC
+7 XCVML => 6 RJRHP
+5 BHXH, 4 VRPVC => 5 LTCX`;
+  
+console.log(oresRequiredForFuel(example5));
