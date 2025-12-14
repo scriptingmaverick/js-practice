@@ -1,92 +1,58 @@
-const isOre = (x) => x[0].includes("ORE");
-const isFuel = (x) => x[1].includes("FUEL");
-const sum = (sum, e) => sum + e;
-
 const parseRawMaterials = (rawMaterials) =>
-  rawMaterials.split("\n").map((x) => x.split(" => "));
-
-const getRestOfTheReacions = (parsedData) =>
-  parsedData.filter((x) => !isFuel(x) && !isOre(x));
+  // rawMaterials.split("\n").map((x) => x.split(" => "));
+  rawMaterials.split("\r\n").map((x) => x.split(" => "));
 
 const parse = (substance) => substance.map((x) => x.split(" "));
 
 const parseReactions = (data) =>
-  data.reduce((obj, x) => (obj[x[1]] = x[0].split(", ")) && obj, {});
+  data.reduce((obj, x) => {
+    const output = parse([x[1]])[0];
+    const inputs = x[0].split(", ").map((i) => parse([i])[0]);
+    obj[output[1]] = { outQty: +output[0], inputs };
+    return obj;
+  }, {});
 
-const parseMaterials = (rawMaterials) => {
-  const parsedData = parseRawMaterials(rawMaterials);
-  const ores = parseReactions(parsedData.filter(isOre));
-  const fuelRequirement = parseReactions(parsedData.filter(isFuel));
-  const rest = parseReactions(getRestOfTheReacions(parsedData));
-  return { ores, rest, fuelRequirement };
-};
+const parseMaterials = (rawMaterials) =>
+  parseReactions(parseRawMaterials(rawMaterials));
 
-const findReactionSource = (reaction, materialsAvailable) => {
-  const [dividend, reactor] = parse([reaction])[0];
-  const oreKey = Object.keys(materialsAvailable.ores).filter((key) =>
-    key.includes(reactor)
-  );
+const calculateORE = (reactions, fuelCount = 1) => {
+  const need = { FUEL: fuelCount };
+  const leftovers = {};
+  while (true) {
+    const chemical = Object.keys(need).find((x) => x !== "ORE");
+    if (!chemical) break;
 
-  if (oreKey.length > 0) {
-    return [reaction];
-  }
+    let qtyNeeded = need[chemical];
+    delete need[chemical];
 
-  const key = Object.keys(materialsAvailable.rest).filter((x) =>
-    x.includes(reactor)
-  );
-  const divisor = parse(key)[0][0];
-  const newReactions = materialsAvailable.rest[key].map((reaction) => {
-    const [multiplier, reactorName] = parse([reaction])[0];
-    return Math.ceil(+dividend / +divisor) * +multiplier + " " + reactorName;
-  });
+    const leftover = leftovers[chemical] || 0;
+    const usage = Math.min(leftover, qtyNeeded);
 
-  return newReactions;
-};
+    leftovers[chemical] = leftover - usage;
+    qtyNeeded -= usage;
 
-const normalize = (reactions) =>
-  Object.entries(
-    reactions.reduce((sums, reaction) => {
-      const [quantity, name] = parse([reaction])[0];
-      sums[name] = (sums[name] || 0) + +quantity;
-      return sums;
-    }, {})
-  ).map((x) => `${x[1]} ${x[0]}`);
+    if (qtyNeeded === 0) continue;
 
-const trenchDownReactions = (reactions, materialsAvailable) => {
-  const oreKeys = Object.keys(materialsAvailable.ores).map(
-    (x) => parse([x])[0][1]
-  );
+    const reaction = reactions[chemical];
+    const batches = Math.ceil(qtyNeeded / reaction.outQty);
 
-  while (!reactions.every((x) => oreKeys.includes(parse([x])[0][1]))) {
-    let combinedRections = [];
-    let i = 0;
+    const produced = batches * reaction.outQty;
+    leftovers[chemical] = (leftovers[chemical] || 0) + (produced - qtyNeeded);
 
-    while (i < reactions.length) {
-      const source = findReactionSource(reactions[i++], materialsAvailable);
-      combinedRections = combinedRections.concat(source);
+    for (const [inputQty, inputName] of reaction.inputs.map((x) => [
+      +x[0],
+      x[1],
+    ])) {
+      need[inputName] = (need[inputName] || 0) + inputQty * batches;
     }
-    reactions = normalize(combinedRections);
   }
 
-  return reactions.map((x) => parse([x])[0]);
+  return need.ORE;
 };
-
-const turnToOres = (reactions, ores) =>
-  reactions.reduce((sum, reaction) => {
-    const oreKey = Object.keys(ores).filter((x) => x.includes(reaction[1]));
-    const divisor = +parse(oreKey)[0][0];
-    const multiplicand = +parse(ores[oreKey])[0][0];
-    console.log(ores[oreKey], oreKey, divisor, multiplicand, reaction);
-    sum += Math.ceil(reaction[0] / divisor) * multiplicand;
-    return sum;
-  }, 0);
 
 const oresRequiredForFuel = (rawMaterials) => {
-  const materialsAvailable = parseMaterials(rawMaterials);
-  const fuelReactions = Object.values(materialsAvailable.fuelRequirement)[0];
-  const fuelSources = trenchDownReactions(fuelReactions, materialsAvailable);
-  const oresRequiredForFuel = turnToOres(fuelSources, materialsAvailable.ores);
-  return oresRequiredForFuel;
+  const reactions = parseMaterials(rawMaterials);
+  return calculateORE(reactions, 1);
 };
 
 const example1 = `10 ORE => 10 A
@@ -141,8 +107,28 @@ const example5 = `171 ORE => 8 CNZTR
 12 VRPVC, 27 CNZTR => 2 XDBXC
 15 KTJDG, 12 BHXH => 5 XCVML
 3 BHXH, 2 VRPVC => 7 MZWV
-121 ORE => 7 VRPVC
+121 ORE => 7 VRP    VC
 7 XCVML => 6 RJRHP
 5 BHXH, 4 VRPVC => 5 LTCX`;
 
-console.log(oresRequiredForFuel(example5));
+const fileInput = Deno.readTextFileSync("input.txt");
+
+const largestFuelToBeProduced = (rawMaterials) => {
+  const oreSource = 1000000000000;
+  const reactions = parseMaterials(rawMaterials);
+  let [min, max] = [1, 100];
+  let [minOres, maxOres] = [0, 0];
+  while (min < max) {
+    minOres = calculateORE(reactions, min);
+    maxOres = calculateORE(reactions, max);
+    if (maxOres < oreSource) {
+      [min, max] = [max, max * 100];
+    } else {
+      max = Math.floor((min + max) / 2);
+    }
+  }
+  return max;
+};
+
+console.log(oresRequiredForFuel(fileInput));
+console.log(largestFuelToBeProduced(fileInput));

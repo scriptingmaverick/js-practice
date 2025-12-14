@@ -2,13 +2,14 @@ import { distinctBy } from "jsr:@std/collections";
 
 const asteroidsPositions = (asteroidMap) => {
   return asteroidMap.reduce(
-    (result, row, rowIndex) => (row.split("").map((col, colIndex) => {
-      const char = row[colIndex];
-      if (char === "#") {
-        result.push({ x: colIndex, y: rowIndex });
-      }
-    }) && result),
-    [],
+    (result, row, rowIndex) =>
+      row.split("").map((col, colIndex) => {
+        const char = row[colIndex];
+        if (char === "#") {
+          result.push({ x: colIndex, y: rowIndex });
+        }
+      }) && result,
+    []
   );
 };
 
@@ -39,12 +40,14 @@ const getVisibilityRange = (mainAsteroid, asteriod) => {
 };
 
 const lengthOf = (func, asteriod, asteroids) => {
-  return Object.keys(
-    func(asteriod, asteroids).reduce(
-      (unique, asteroid) => unique[asteroid] = true && unique,
-      {},
-    ),
-  ).length - 1;
+  return (
+    Object.keys(
+      func(asteriod, asteroids).reduce(
+        (unique, asteroid) => (unique[asteroid] = true && unique),
+        {}
+      )
+    ).length - 1
+  );
 };
 
 const maxAsteroidsCover = (asteroid, asteroids) => {
@@ -54,7 +57,6 @@ const maxAsteroidsCover = (asteroid, asteroids) => {
     visibleAsteroids.push(visibilityRange);
   }
 
-  // console.log("visible asteroids : ", visibleAsteroids);
   return visibleAsteroids;
 };
 
@@ -66,7 +68,7 @@ const buildMonitoringSystem = (asteroidMap) => {
     const newStationsCover = lengthOf(
       maxAsteroidsCover,
       asteroids[i],
-      asteroids,
+      asteroids
     );
     if (newStationsCover > maxStationsCover) {
       maxStationsCover = newStationsCover;
@@ -144,15 +146,16 @@ const shootAsteroids = (asteroidMap, index) => {
   const station = buildMonitoringSystem(asteroidMap);
   const asteroidPositions = asteroidsPositions(asteroidMap.split("\n"));
   const asteroidsWithAngles = addAnglesToAstroeids(station, asteroidPositions);
-  const distinctAsteroids = distinctBy(asteroidsWithAngles, (e) => e.angle)
-    .sort((a, b) => a.angle - b.angle);
+  const distinctAsteroids = distinctBy(
+    asteroidsWithAngles,
+    (e) => e.angle
+  ).sort((a, b) => a.angle - b.angle);
   const similarAsteroids = [];
   distinctAsteroids.forEach((asteroid) => {
     similarAsteroids.push(
-      asteroidsWithAngles.filter((e) => e.angle === asteroid.angle).sort((
-        a,
-        b,
-      ) => a.distace - b.distace),
+      asteroidsWithAngles
+        .filter((e) => e.angle === asteroid.angle)
+        .sort((a, b) => a.distace - b.distace)
     );
   });
 
