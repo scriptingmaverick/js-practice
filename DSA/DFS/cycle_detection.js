@@ -1,14 +1,16 @@
 const dfs = (nodes, u) => {
-  if (!(u in nodes)) return false;
   nodes[u].state = 1;
   const state = {
     1: () => true,
     2: () => false,
-    0: (v) => dfs(nodes, v),
+    0: (v) => {
+      if (dfs(nodes, v)) return true;
+    },
   };
 
-  for (let v of nodes[u].adjacentNodes) {
-    return state[nodes[v].state](v);
+  for (const v of nodes[u].adjacentNodes) {
+    if (!(v in nodes)) return false;
+    if (state[nodes[v].state](v)) return true;
   }
 
   nodes[u].state = 2;
@@ -29,14 +31,66 @@ const checkCycle = (graph, startNode) => {
   return dfs(nodes, startNode);
 };
 
+const checkForTopologicalSort = (graph, startNode) =>
+  !checkCycle(graph, startNode);
+
 console.log(
-  checkCycle([["1", "2"], ["2", "3"], ["3", "1"], ["3", "4"]], "1"),
+  checkCycle(
+    [
+      ["1", "2"],
+      ["2", "3"],
+      ["3", "1"],
+      ["3", "4"],
+    ],
+    "1"
+  )
 );
 
 console.log(
-  checkCycle([["1", "2"], ["2", "3"], ["3", "5"], ["5", "4"], ["4", "6"]], "1"),
+  checkCycle(
+    [
+      ["1", "2"],
+      ["2", "3"],
+      ["3", "5"],
+      ["5", "4"],
+      ["4", "6"],
+    ],
+    "1"
+  )
 );
 
 console.log(
-  checkCycle([["1", "2"], ["2", "3"], ["3", "4"], ["4", "2"]], "1"),
+  checkCycle(
+    [
+      ["1", "2"],
+      ["2", "3"],
+      ["3", "4"],
+      ["4", "2"],
+    ],
+    "1"
+  )
+);
+console.log(
+  checkForTopologicalSort(
+    [
+      ["1", "2"],
+      ["2", "3"],
+      ["3", "5"],
+      ["5", "4"],
+      ["4", "6"],
+    ],
+    "1"
+  )
+);
+
+console.log(
+  checkForTopologicalSort(
+    [
+      ["1", "2"],
+      ["2", "3"],
+      ["3", "4"],
+      ["4", "2"],
+    ],
+    "1"
+  )
 );
