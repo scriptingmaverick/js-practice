@@ -1,21 +1,16 @@
 let relativeBase = 0;
-const applyModes = (modes, arr, pointer, threshold) => {
+const applyModes = (modes, memory, pointer, threshold) => {
   const indices = [];
+  const modeIndex = {
+    0: (i) => memory[pointer + i],
+    1: (i) => pointer + i,
+    2: (i) => relativeBase + memory[pointer + i],
+  };
   for (let i = 1; i <= threshold; i++) {
-    switch (+modes[i - 1]) {
-      case 0:
-        indices.push(arr[pointer + i]);
-        break;
-      case 1:
-        indices.push(pointer + i);
-        break;
-      case 2:
-        indices.push(relativeBase + arr[pointer + i]);
-        break;
-    }
+    indices.push(modeIndex[modes[i - 1]](i));
   }
   for (let i = 0; i < indices.length; i++) {
-    if (!arr[indices[i]]) arr[indices[i]] = 0;
+    if (!memory[indices[i]]) memory[indices[i]] = 0;
   }
   return indices;
 };
@@ -26,29 +21,30 @@ const isZero = (value) => value === 0;
 const isNotZero = (value) => !isZero(value);
 const areEqual = (number1, number2) => number1 === number2;
 const isLessThan = (number1, number2) => number1 < number2;
-const storeInput = (input, arr, modes, result) => {
-  const index = applyModes(modes, arr, result.pointerPos, 1)[0];
-  arr[index] = input;
+
+const storeInput = (input, result, memory, modes) => {
+  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
+  memory[index] = input;
   result.pointerPos += 2;
 };
-const showData = (arr, modes, result) => {
-  const index = applyModes(modes, arr, result.pointerPos, 1)[0];
-  result.outputs.push(arr[index]);
+const showData = (result, memory, modes) => {
+  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
+  result.outputs.push(memory[index]);
   result.pointerPos += 2;
 };
-const jmp = (func, memory, modes, result) => {
+const jmp = (func, result, memory, modes) => {
   const indices = applyModes(modes, memory, result.pointerPos, 2);
   result.pointerPos = func(memory[indices[0]])
     ? memory[indices[1]]
     : result.pointerPos + 3;
 };
-const algebra = (func, arr, modes, result) => {
-  const indices = applyModes(modes, arr, result.pointerPos, 3);
-  arr[indices[2]] = func(arr[indices[0]], arr[indices[1]]) ? 1 : 0;
+const algebra = (func, result, memory, modes) => {
+  const indices = applyModes(modes, memory, result.pointerPos, 3);
+  memory[indices[2]] = func(memory[indices[0]], memory[indices[1]]) ? 1 : 0;
   result.pointerPos += 4;
 };
 
-const perform = (func, memory, modes, result) => {
+const perform = (func, result, memory, modes) => {
   const indices = applyModes(modes, memory, result.pointerPos, 3);
   memory[indices[2]] = func(memory[indices[0]], memory[indices[1]]);
   result.pointerPos += 4;
@@ -63,16 +59,16 @@ const changeBase = (result, memory, modes) => {
 export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
   const rawMemory = corruptedMemory.split(",");
   const execute = {
-    "01": (result, memory, modes) => perform(add, memory, modes, result),
-    "02": (result, memory, modes) => perform(mul, memory, modes, result),
-    "03": (result, memory, modes) => storeInput(input, memory, modes, result),
-    "04": (result, memory, modes) => showData(memory, modes, result),
-    "05": (result, memory, modes) => jmp(isNotZero, memory, modes, result),
-    "06": (result, memory, modes) => jmp(isZero, memory, modes, result),
-    "07": (result, memory, modes) => algebra(isLessThan, memory, modes, result),
-    "08": (result, memory, modes) => algebra(areEqual, memory, modes, result),
-    "09": (result, memory, modes) => changeBase(result, memory, modes),
-    "99": (result) => (result.canContinue = false),
+    "01": perform.bind(null, add),
+    "02": perform.bind(null, mul),
+    "03": storeInput.bind(null, input),
+    "04": showData,
+    "05": jmp.bind(null, isNotZero),
+    "06": jmp.bind(null, isZero),
+    "07": algebra.bind(null, isLessThan),
+    "08": algebra.bind(null, areEqual),
+    "09": changeBase,
+    99: (result) => (result.canContinue = false),
   };
 
   const memory = rawMemory.map((x) => parseInt(x));
@@ -108,7 +104,10 @@ const createGameField = (program) => {
     const key = `${x},${y}`;
     gameField[key] = tileId;
     pointer = result.pointer;
-    const newProgram = result.program.split(",").map((x) => +x || 0).join(",");
+    const newProgram = result.program
+      .split(",")
+      .map((x) => +x || 0)
+      .join(",");
     result = sprint(newProgram, pointer);
   }
 
@@ -140,7 +139,10 @@ const runGame = (program) => {
     }
 
     pointer = result.pointer;
-    const newProgram = result.program.split(",").map((x) => +x || 0).join(",");
+    const newProgram = result.program
+      .split(",")
+      .map((x) => +x || 0)
+      .join(",");
 
     if (paddlePos.x < ballPos.x) input = 1;
     else if (paddlePos.x === ballPos.x) input = 0;
