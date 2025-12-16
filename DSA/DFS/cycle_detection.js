@@ -42,8 +42,8 @@ console.log(
       ["3", "1"],
       ["3", "4"],
     ],
-    "1"
-  )
+    "1",
+  ),
 );
 
 console.log(
@@ -55,8 +55,8 @@ console.log(
       ["5", "4"],
       ["4", "6"],
     ],
-    "1"
-  )
+    "1",
+  ),
 );
 
 console.log(
@@ -67,8 +67,8 @@ console.log(
       ["3", "4"],
       ["4", "2"],
     ],
-    "1"
-  )
+    "1",
+  ),
 );
 console.log(
   checkForTopologicalSort(
@@ -79,8 +79,8 @@ console.log(
       ["5", "4"],
       ["4", "6"],
     ],
-    "1"
-  )
+    "1",
+  ),
 );
 
 console.log(
@@ -91,6 +91,13 @@ console.log(
       ["3", "4"],
       ["4", "2"],
     ],
-    "1"
-  )
+    "1",
+  ),
+);
+
+console.log(
+  checkForTopologicalSort(
+    [[5, 2], [5, 0], [4, 0], [4, 1], [2, 3], [3, 1]],
+    "5",
+  ),
 );
