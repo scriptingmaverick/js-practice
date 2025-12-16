@@ -139,10 +139,7 @@ const runGame = (program) => {
     }
 
     pointer = result.pointer;
-    const newProgram = result.program
-      .split(",")
-      .map((x) => +x || 0)
-      .join(",");
+    const newProgram = result.program.split(",").map((x) => +x || 0).join(",");
 
     if (paddlePos.x < ballPos.x) input = 1;
     else if (paddlePos.x === ballPos.x) input = 0;

@@ -1,10 +1,9 @@
-let relativeBase = 0;
-const applyModes = (modes, memory, pointer, threshold) => {
+const applyModes = (result, modes, memory, pointer, threshold) => {
   const indices = [];
   const modeIndex = {
     0: (i) => memory[pointer + i],
     1: (i) => pointer + i,
-    2: (i) => relativeBase + memory[pointer + i],
+    2: (i) => result.base + memory[pointer + i],
   };
   for (let i = 1; i <= threshold; i++) {
     indices.push(modeIndex[modes[i - 1]](i));
@@ -23,41 +22,40 @@ const areEqual = (number1, number2) => number1 === number2;
 const isLessThan = (number1, number2) => number1 < number2;
 
 const storeInput = (input, result, memory, modes) => {
-  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
+  const index = applyModes(result, modes, memory, result.pointerPos, 1)[0];
   memory[index] = input;
   result.pointerPos += 2;
 };
 const showData = (result, memory, modes) => {
-  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
+  const index = applyModes(result, modes, memory, result.pointerPos, 1)[0];
   result.output = memory[index];
   result.pointerPos += 2;
 };
 const jmp = (func, result, memory, modes) => {
-  const indices = applyModes(modes, memory, result.pointerPos, 2);
+  const indices = applyModes(result, modes, memory, result.pointerPos, 2);
   result.pointerPos = func(memory[indices[0]])
     ? memory[indices[1]]
     : result.pointerPos + 3;
 };
 const algebra = (func, result, memory, modes) => {
-  const indices = applyModes(modes, memory, result.pointerPos, 3);
+  const indices = applyModes(result, modes, memory, result.pointerPos, 3);
   memory[indices[2]] = func(memory[indices[0]], memory[indices[1]]) ? 1 : 0;
   result.pointerPos += 4;
 };
 
 const perform = (func, result, memory, modes) => {
-  const indices = applyModes(modes, memory, result.pointerPos, 3);
+  const indices = applyModes(result, modes, memory, result.pointerPos, 3);
   memory[indices[2]] = func(memory[indices[0]], memory[indices[1]]);
   result.pointerPos += 4;
 };
 
 const changeBase = (result, memory, modes) => {
-  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
-  relativeBase = relativeBase + memory[index];
+  const index = applyModes(result, modes, memory, result.pointerPos, 1)[0];
+  result.base = result.base + memory[index];
   result.pointerPos += 2;
 };
 
-export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
-  const rawMemory = corruptedMemory.split(",");
+export const sprint = (corruptedMemory, pointer = 0, input = 0, base = 0) => {
   const execute = {
     "01": perform.bind(null, add),
     "02": perform.bind(null, mul),
@@ -71,12 +69,12 @@ export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
     99: (result) => (result.canContinue = false),
   };
 
-  const memory = rawMemory.map((x) => parseInt(x));
-
+  const memory = corruptedMemory.split(",").map((x) => parseInt(x));
   const result = {
     pointerPos: pointer,
     canContinue: true,
-    output: 0,
+    output: "",
+    base,
   };
 
   while (result.pointerPos < memory.length && result.canContinue) {
@@ -88,6 +86,7 @@ export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
         output: result.output,
         program: memory.join(","),
         pointer: result.pointerPos,
+        base: result.base,
       };
     }
   }
@@ -96,10 +95,10 @@ export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
 };
 
 const distance = {
-  0: [0, 1],
-  1: [1, 0],
-  2: [0, -1],
-  3: [-1, 0],
+  1: [0, 1], // North
+  2: [0, -1], // South
+  3: [-1, 0], // West
+  4: [1, 0], // East
 };
 
 const recognizePath = (parents, targetKey) => {
@@ -111,39 +110,111 @@ const recognizePath = (parents, targetKey) => {
   return path.reverse();
 };
 
-const findMinPath = (memory, start) => {
-  const parents = {};
-  parents[start] = null;
-  const queue = [start];
-  let targetKey = null;
-  const visitedNodes = {};
-  visitedNodes[start] = true;
-  while (queue.length > 0) {
-    const key = queue.shift();
-    const [keyX, keyY] = key.split(",");
-    if (grid[+keyX][+keyY] === "2") {
-      targetKey = key;
-      break;
-    }
-    const lastQueue = queue.slice()
-    let direction = 0;
-    while (direction <= 3) {
-      const result = sprint(memory, pointer, direction);
-      if (result.output === 0) continue;
-      const [x, y] = distance[direction++];
-      const [newX, newY] = [+keyX + +x, +keyY + +y];
-      const newKey = `${newX},${newY}`;
-      if (newKey in visitedNodes) continue;
-      visitedNodes[newKey] = true;
-      queue.push(newKey);
-      parents[newKey] = key;
-    }
+const getPath = (initialMemoryString, canReturn = [false, 0]) => {
+  const initialMemory = initialMemoryString.split(",").map(Number).join(",");
+  const queue = [{
+    pos: "0,0",
+    memory: initialMemory,
+    pointer: 0,
+    base: 0,
+  }];
 
-    if (lastQueue.length === queue.length) {
-      
+  const visited = { "0,0": true };
+  const parents = { "0,0": null };
+  let oxygenKey = "";
+  while (queue.length > 0) {
+    const { pos, memory, pointer, base } = queue.shift();
+    for (let d = 1; d <= 4; d++) {
+      const result = sprint(memory, pointer, d, base);
+      if (result.output === 0) continue;
+      const [dx, dy] = distance[d];
+      const [x, y] = pos.split(",").map(Number);
+      const newKey = `${x + dx},${y + dy}`;
+      if (!(newKey in visited)) {
+        visited[newKey] = true;
+        parents[newKey] = pos;
+
+        queue.push({
+          pos: newKey,
+          memory: result.program,
+          pointer: result.pointer,
+          base: result.base,
+        });
+
+        if (result.output === 2) {
+          oxygenKey = newKey;
+          if (!canReturn[0]) return [parents, newKey, visited];
+        }
+      }
     }
   }
-  return recognizePath(parents, targetKey);
+
+  return [parents, oxygenKey, visited];
 };
 
-findMinPath(memory, "0,0");
+const findMinPath = (program) => {
+  const [parents, oxygenKey] = getPath(program);
+  const path = recognizePath(parents, oxygenKey);
+  console.log("Oxygen System Found!");
+  console.log("Shortest Path Length:", path.length - 1);
+  return path;
+};
+
+const printMaze = (fullMap, oxygenKey) => {
+  const coords = Object.keys(fullMap).map(k => k.split(',').map(Number));
+  
+  const minX = Math.min(...coords.map(c => c[0]));
+  const maxX = Math.max(...coords.map(c => c[0]));
+  const minY = Math.min(...coords.map(c => c[1]));
+  const maxY = Math.max(...coords.map(c => c[1]));
+
+  console.log(`Grid: X(${minX} to ${maxX}), Y(${minY} to ${maxY})`);
+
+  for (let y = maxY; y >= minY; y--) {
+    let row = "";
+    for (let x = minX; x <= maxX; x++) {
+      const key = `${x},${y}`;
+      
+      if (key === oxygenKey) {
+        row += "O"; // High priority: Oxygen System
+      } else if (key === "0,0") {
+        row += "S"; // Starting position
+      } else if (fullMap[key]) {
+        row += "."; // Reachable floor
+      } else {
+        row += "#"; // Wall or Unreachable
+      }
+    }
+    console.log(row);
+  }
+};
+
+const calculateMinsToSpreadOxygen = (program) => {
+  const [parents, oxygenKey, visited] = getPath(program);
+  const queue = [{ pos: oxygenKey, minute: 0 }];
+  delete visited[oxygenKey];
+  let maxMin = 0;
+  while (queue.length > 0) {
+    printMaze(visited, oxygenKey);
+    const parent = queue.shift();
+    if (parent.minute > maxMin) maxMin = parent.minute;
+    const [keyX, keyY] = parent.pos.split(",");
+    for (let d = 1; d <= 4; d++) {
+      const [x, y] = distance[d];
+      const neighbour = `${+keyX + x},${+keyY + y}`;
+      if (neighbour in visited) {
+        delete visited[neighbour];
+        const newMin = parent.minute + 1;
+        queue.push({ pos: neighbour, minute: newMin });
+      }
+    }
+    for (let i = 0; i < 100000000; i++);
+    console.clear();
+  }
+
+  return maxMin;
+};
+
+const input = Deno.readTextFileSync("input.txt"); //op :286
+// findMinPath(input);
+console.log(calculateMinsToSpreadOxygen(input));
