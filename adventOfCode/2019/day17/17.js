@@ -96,11 +96,20 @@ export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
   return ["halted", result.outputs];
 };
 
+const directions = {
+  0: [0, 1],
+  1: [0, -1],
+  2: [1, 0],
+  3: [-1, 0],
+};
+
 const getObectsInTheField = (program) => sprint(program)[1];
 
-const createField = (program) => {
+const visualize = (program) => {
   const grid = getObectsInTheField(program);
-  let row = "";
+  console.log(grid);
+  const rows = [];
+  let row = [];
   const objects = {
     35: "#",
     46: ".",
@@ -109,12 +118,155 @@ const createField = (program) => {
   };
 
   for (let i = 0; i < grid.length; i++) {
-    row += objects[grid[i]];
+    if (grid[i] === 10) {
+      rows.push(row);
+      row = [];
+      continue;
+    }
+    row.push(objects[grid[i]]);
   }
 
-  console.log(row);
+  return rows.map((x) => x.join("")).join("\n");
 };
 
-const input = Deno.readTextFileSync("input.txt");
+const areNotInRange = (x, y, field) =>
+  x <= 0 || y <= 0 || x >= field.length - 1 || y >= field[0].length - 1;
 
-createField(input);
+const isAnIntersection = (pos, field) => {
+  let i = 0;
+  while (i < 4) {
+    const [x, y] = directions[i];
+    const [starX, starY] = pos;
+    const [posX, posY] = [starX + x, starY + y];
+    if (areNotInRange(posX, posY, field)) break;
+    if (field[posX][posY] !== "35") break;
+    i++;
+  }
+
+  return i === 4;
+};
+
+const findInterSections = (program) => {
+  const rawField = getObectsInTheField(program);
+  const field = rawField.join(",").split("10").map((x) =>
+    x.split(",").filter((x) => x.trim() !== "")
+  );
+
+  const intersections = [];
+  const rows = field.length - 2;
+  const cols = field[0].length;
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < cols; j++) {
+      if (field[i][j] === "35" && isAnIntersection([i, j], field)) {
+        intersections.push([i, j]);
+      }
+    }
+  }
+
+  return intersections.reduce((sum, pos) => sum + pos[0] * pos[1], 0);
+};
+
+const ex1 = [
+  "46",
+  "46",
+  "35",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "10",
+  "46",
+  "46",
+  "35",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "46",
+  "10",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "46",
+  "46",
+  "46",
+  "35",
+  "35",
+  "35",
+  "10",
+  "35",
+  "46",
+  "35",
+  "46",
+  "46",
+  "46",
+  "35",
+  "46",
+  "46",
+  "46",
+  "35",
+  "46",
+  "35",
+  "10",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "10",
+  "46",
+  "46",
+  "35",
+  "46",
+  "46",
+  "46",
+  "35",
+  "46",
+  "46",
+  "46",
+  "35",
+  "46",
+  "46",
+  "10",
+  "46",
+  "46",
+  "35",
+  "35",
+  "35",
+  "35",
+  "35",
+  "46",
+  "46",
+  "46",
+  "94",
+  "46",
+  "46",
+  "10",
+];
+
+const input = Deno.readTextFileSync("input.txt");
+// console.log(visualize(input));
+console.log(findInterSections(input));
