@@ -9,37 +9,51 @@ const repeat = (series, length) => series.repeat(length);
 
 const phaseOf = (data) => {
   const resultingNums = [];
-  for (let i = 1; i <= data.length; i++) {
-    const series = repeatSeries(i);
-    let sum = 0;
-    let j = i + 1;
-    while (j < data.length) {
-      const seriesNum = series[(j - i) % series.length];
-      sum += data[j] * seriesNum;
-      j += (i + 1) * i + 1;
-    }
+  for (let i = 0; i < data.length; i++) {
+    const series = repeatSeries(i + 1);
+    const result = data.reduce(
+      (sum, currNum, index) => {
+        const seriesNum = series[(index + 1) % series.length];
+        sum += currNum * seriesNum;
+        return sum;
+      },
+      0,
+    );
 
-    resultingNums.push(Math.abs(sum % 10));
+    resultingNums.push(Math.abs(result % 10));
   }
 
   return resultingNums;
 };
 
-const fft = (data, phaseThreshold = 100) => {
+const fft = (data, func = phaseOf, phaseThreshold = 100) => {
   let result = data.split("").map(Number);
   for (let i = 0; i < phaseThreshold; i++) {
-    result = phaseOf(result);
+    result = func(result);
   }
 
-  return result;
+  return result.slice(0, 8);
 };
 
 const decodeSignal = (data) => {
   const changedData = repeat(data, 10000);
-  console.log(changedData.length);
-  console.log(data.length * 10000);
   const length = +data.slice(0, 7);
-  // return fft(changedData).slice(length, length + 8);
+  const polishedData = changedData.slice(length);
+  return fft(polishedData, PhaseForPart2);
+};
+
+const PhaseForPart2 = (data) => {
+  const resultingNums = [];
+  let offset = 8;
+  let addend = 0;
+  for (let i = data.length - 2; i >= -1; i--) {
+    const answer = (offset + addend) % 10;
+    resultingNums[i + 1] = answer;
+    addend = data[i];
+    offset = resultingNums[i + 1];
+  }
+
+  return resultingNums;
 };
 
 const input = Deno.readTextFileSync("input.txt");
@@ -52,6 +66,6 @@ const example4 = "69317163492948606335995924319873";
 const ex1 = "03036732577212944063491565474664"; // 84462026.
 const ex2 = "02935109699940807407585447034323"; // 78725270.
 const ex3 = "03081770884921959731165446850517"; // 53553731.
-console.log(fft(example4).slice(0, 8));
 
-console.log(decodeSignal(ex1));
+// console.log(fft(input));
+console.log(decodeSignal(input));
