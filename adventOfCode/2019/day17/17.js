@@ -1,16 +1,15 @@
-let relativeBase = 0;
-const applyModes = (modes, memory, pointer, threshold) => {
+const applyModes = (modes, memory, result, threshold) => {
   const indices = [];
   const modeIndex = {
-    0: (i) => memory[pointer + i],
-    1: (i) => pointer + i,
-    2: (i) => relativeBase + memory[pointer + i],
+    0: (i) => memory[result.pointerPos + i],
+    1: (i) => result.pointerPos + i,
+    2: (i) => result.rb + memory[result.pointerPos + i],
   };
   for (let i = 1; i <= threshold; i++) {
     indices.push(modeIndex[modes[i - 1]](i));
   }
   for (let i = 0; i < indices.length; i++) {
-    if (!memory[indices[i]]) memory[indices[i]] = 0;
+    if (memory[indices[i]] === undefined) memory[indices[i]] = 0;
   }
   return indices;
 };
@@ -22,38 +21,37 @@ const isNotZero = (value) => !isZero(value);
 const areEqual = (number1, number2) => number1 === number2;
 const isLessThan = (number1, number2) => number1 < number2;
 
-const storeInput = (inputs, result, memory, modes) => {
-  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
-  memory[index] = inputs[result.index++];
+const storeInput = (result, memory, modes) => {
+  const index = applyModes(modes, memory, result, 1)[0];
+  memory[index] = result.inputs[result.index++];
   result.pointerPos += 2;
 };
 const showData = (result, memory, modes) => {
-  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
-  // result.outputs.push(memory[index]);
-  console.log(memory[index]);
+  const index = applyModes(modes, memory, result, 1)[0];
+  result.outputs.push(memory[index]);
   result.pointerPos += 2;
 };
 const jmp = (func, result, memory, modes) => {
-  const indices = applyModes(modes, memory, result.pointerPos, 2);
+  const indices = applyModes(modes, memory, result, 2);
   result.pointerPos = func(memory[indices[0]])
     ? memory[indices[1]]
     : result.pointerPos + 3;
 };
 const algebra = (func, result, memory, modes) => {
-  const indices = applyModes(modes, memory, result.pointerPos, 3);
+  const indices = applyModes(modes, memory, result, 3);
   memory[indices[2]] = func(memory[indices[0]], memory[indices[1]]) ? 1 : 0;
   result.pointerPos += 4;
 };
 
 const perform = (func, result, memory, modes) => {
-  const indices = applyModes(modes, memory, result.pointerPos, 3);
+  const indices = applyModes(modes, memory, result, 3);
   memory[indices[2]] = func(memory[indices[0]], memory[indices[1]]);
   result.pointerPos += 4;
 };
 
 const changeBase = (result, memory, modes) => {
-  const index = applyModes(modes, memory, result.pointerPos, 1)[0];
-  relativeBase = relativeBase + memory[index];
+  const index = applyModes(modes, memory, result, 1)[0];
+  result.rb = result.rb + memory[index];
   result.pointerPos += 2;
 };
 
@@ -62,46 +60,42 @@ export const sprint = (corruptedMemory, inputs, pointer = 0) => {
   const execute = {
     "01": perform.bind(null, add),
     "02": perform.bind(null, mul),
-    "03": storeInput.bind(null, inputs),
+    "03": storeInput,
     "04": showData,
     "05": jmp.bind(null, isNotZero),
     "06": jmp.bind(null, isZero),
     "07": algebra.bind(null, isLessThan),
     "08": algebra.bind(null, areEqual),
     "09": changeBase,
-    99: (result) => (result.canContinue = false),
+    "99": (result) => (result.canContinue = false),
   };
 
   const memory = rawMemory.map((x) => parseInt(x));
+  memory[0] = 2;
 
   const result = {
     pointerPos: pointer,
     canContinue: true,
     index: 0,
+    inputs,
+    outputs: [],
+    rb: 0,
   };
 
-  while (result.pointerPos < memory.length && result.canContinue) {
+  while (result.canContinue) {
     const cmd = memory[result.pointerPos].toString().padStart(5, "0");
     const modes = cmd.slice(0, 3).split("").reverse();
-    execute[cmd.slice(3, 5)](result, memory, modes);
-    // if (result.outputs.length === 3) {
-    //   return {
-    //     outputs: result.outputs,
-    //     program: memory.join(","),
-    //     pointer: result.pointerPos,
-    //   };
-    // }
+    const opCode = cmd.slice(3);
+    execute[opCode](result, memory, modes);
   }
 
-  // return "halted";
-  return ["halted", result.outputs];
+  return result.outputs.at(-1);
 };
 
 const getObectsInTheField = (program) => sprint(program)[1];
 
 const visualize = (program) => {
   const grid = getObectsInTheField(program.replace("2", "1"));
-  // const grid = getObectsInTheField(program);
   const rows = [];
   let row = [];
   const objects = {
@@ -230,7 +224,6 @@ const getRouteMap = (program) => {
     const [x, y] = robo.pos;
     const newPos = [offSetX + x, offSetY + y];
     if (isNotInRange(newPos, field) || !isInPath(newPos, field)) {
-      // path.push(robo.direction);
       isEnd = rotate(robo, field);
       continue;
     }
@@ -242,15 +235,17 @@ const getRouteMap = (program) => {
   return robo.path.join(",");
 };
 
-const format = (sequence) =>
-  sequence.split(",").flatMap((x) => [+x.charCodeAt(), 44]);
+const format = (sequence) => sequence.split("").flatMap((x) => x.charCodeAt(0));
 
 const runRoutines = (program) => {
-  const sequences =
-    "A,B,A,C,A,C,B,C,C,B,\n,L,4,L,4,L,10,R,4,\n,R,4,L,4,L,4,R,8,R,10,\n,R,4,L,10,R,10";
-  const routines = format(sequences).slice(0, -1);
-  console.log(routines);
-  sprint(program, routines);
+  const sequences = "A,B,A,C,A,C,B,C,C,B\n" +
+    "L,4,L,4,L,10,R,4\n" +
+    "R,4,L,4,L,4,R,8,R,10\n" +
+    "R,4,L,10,R,10\n" + "n\n";
+
+  const routines = format(sequences);
+  const result = sprint(program, routines);
+  console.log(result);
 };
 
 const input = Deno.readTextFileSync("input.txt");
