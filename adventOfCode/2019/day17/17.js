@@ -22,14 +22,15 @@ const isNotZero = (value) => !isZero(value);
 const areEqual = (number1, number2) => number1 === number2;
 const isLessThan = (number1, number2) => number1 < number2;
 
-const storeInput = (input, result, memory, modes) => {
+const storeInput = (inputs, result, memory, modes) => {
   const index = applyModes(modes, memory, result.pointerPos, 1)[0];
-  memory[index] = input;
+  memory[index] = inputs[result.index++];
   result.pointerPos += 2;
 };
 const showData = (result, memory, modes) => {
   const index = applyModes(modes, memory, result.pointerPos, 1)[0];
-  result.outputs.push(memory[index]);
+  // result.outputs.push(memory[index]);
+  console.log(memory[index]);
   result.pointerPos += 2;
 };
 const jmp = (func, result, memory, modes) => {
@@ -56,12 +57,12 @@ const changeBase = (result, memory, modes) => {
   result.pointerPos += 2;
 };
 
-export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
+export const sprint = (corruptedMemory, inputs, pointer = 0) => {
   const rawMemory = corruptedMemory.split(",");
   const execute = {
     "01": perform.bind(null, add),
     "02": perform.bind(null, mul),
-    "03": storeInput.bind(null, input),
+    "03": storeInput.bind(null, inputs),
     "04": showData,
     "05": jmp.bind(null, isNotZero),
     "06": jmp.bind(null, isZero),
@@ -76,7 +77,7 @@ export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
   const result = {
     pointerPos: pointer,
     canContinue: true,
-    outputs: [],
+    index: 0,
   };
 
   while (result.pointerPos < memory.length && result.canContinue) {
@@ -96,18 +97,11 @@ export const sprint = (corruptedMemory, pointer = 0, input = 0) => {
   return ["halted", result.outputs];
 };
 
-const directions = {
-  0: [0, 1],
-  1: [0, -1],
-  2: [1, 0],
-  3: [-1, 0],
-};
-
 const getObectsInTheField = (program) => sprint(program)[1];
 
 const visualize = (program) => {
-  const grid = getObectsInTheField(program);
-  console.log(grid);
+  const grid = getObectsInTheField(program.replace("2", "1"));
+  // const grid = getObectsInTheField(program);
   const rows = [];
   let row = [];
   const objects = {
@@ -129,16 +123,22 @@ const visualize = (program) => {
   return rows.map((x) => x.join("")).join("\n");
 };
 
-const areNotInRange = (x, y, field) =>
+const areInRange = ([x, y], field) =>
   x <= 0 || y <= 0 || x >= field.length - 1 || y >= field[0].length - 1;
 
 const isAnIntersection = (pos, field) => {
   let i = 0;
+  const directions = {
+    0: [0, 1],
+    1: [0, -1],
+    2: [1, 0],
+    3: [-1, 0],
+  };
   while (i < 4) {
     const [x, y] = directions[i];
     const [starX, starY] = pos;
-    const [posX, posY] = [starX + x, starY + y];
-    if (areNotInRange(posX, posY, field)) break;
+    const pos = [starX + x, starY + y];
+    if (!areInRange(pos, field)) break;
     if (field[posX][posY] !== "35") break;
     i++;
   }
@@ -146,12 +146,13 @@ const isAnIntersection = (pos, field) => {
   return i === 4;
 };
 
-const findInterSections = (program) => {
-  const rawField = getObectsInTheField(program);
-  const field = rawField.join(",").split("10").map((x) =>
+const parse = (rawField) =>
+  rawField.join(",").split("10").map((x) =>
     x.split(",").filter((x) => x.trim() !== "")
   );
 
+const findInterSections = (program) => {
+  const field = parse(getObectsInTheField(program));
   const intersections = [];
   const rows = field.length - 2;
   const cols = field[0].length;
@@ -166,107 +167,95 @@ const findInterSections = (program) => {
   return intersections.reduce((sum, pos) => sum + pos[0] * pos[1], 0);
 };
 
-const ex1 = [
-  "46",
-  "46",
-  "35",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "10",
-  "46",
-  "46",
-  "35",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "46",
-  "10",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "46",
-  "46",
-  "46",
-  "35",
-  "35",
-  "35",
-  "10",
-  "35",
-  "46",
-  "35",
-  "46",
-  "46",
-  "46",
-  "35",
-  "46",
-  "46",
-  "46",
-  "35",
-  "46",
-  "35",
-  "10",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "10",
-  "46",
-  "46",
-  "35",
-  "46",
-  "46",
-  "46",
-  "35",
-  "46",
-  "46",
-  "46",
-  "35",
-  "46",
-  "46",
-  "10",
-  "46",
-  "46",
-  "35",
-  "35",
-  "35",
-  "35",
-  "35",
-  "46",
-  "46",
-  "46",
-  "94",
-  "46",
-  "46",
-  "10",
-];
+const getRobot = (field) => {
+  const robo = { path: [] };
+  let isPosFound = false;
+  for (let i = 0; i < field.length && !isPosFound; i++) {
+    for (let j = 0; j < field[0].length; j++) {
+      if (field[i][j] === "94") {
+        isPosFound = true;
+        robo.pos = [j, i];
+        robo.direction = "N";
+        break;
+      }
+    }
+  }
+
+  return robo;
+};
+
+const directions = {
+  "N": { L: "W", R: "E", offset: [0, -1] },
+  "S": { L: "E", R: "W", offset: [0, 1] },
+  "E": { L: "N", R: "S", offset: [1, 0] },
+  "W": { L: "S", R: "N", offset: [-1, 0] },
+};
+
+const isInPath = ([x, y], field) => field[y][x] === "35";
+
+const rotate = (robo, field) => {
+  const left = directions[robo.direction]["L"];
+  const right = directions[robo.direction]["R"];
+  const [lx, ly] = directions[left]["offset"];
+  const [x, y] = robo.pos;
+  const leftPos = [x + lx, y + ly];
+  const [rx, ry] = directions[right]["offset"];
+  const rightPos = [x + rx, y + ry];
+
+  if (isInPath(leftPos, field)) {
+    robo.pos = leftPos;
+    robo.direction = left;
+    robo.path.push("L");
+    robo.path.push(1);
+    return false;
+  } else if (isInPath(rightPos, field)) {
+    robo.pos = rightPos;
+    robo.direction = right;
+    robo.path.push("R");
+    robo.path.push(1);
+    return false;
+  }
+  return true;
+};
+
+const isNotInRange = ([x, y], field) =>
+  x < 0 || y < 0 || x > field[0].length - 1 || y > field.length - 1;
+
+const getRouteMap = (program) => {
+  const field = parse(getObectsInTheField(program.replace("2", "1")));
+  const robo = getRobot(field);
+  let isEnd = false;
+  while (!isEnd) {
+    const [offSetX, offSetY] = directions[robo.direction]["offset"];
+    const [x, y] = robo.pos;
+    const newPos = [offSetX + x, offSetY + y];
+    if (isNotInRange(newPos, field) || !isInPath(newPos, field)) {
+      // path.push(robo.direction);
+      isEnd = rotate(robo, field);
+      continue;
+    }
+
+    robo.pos = newPos;
+    robo.path[robo.path.length - 1] = (robo.path.at(-1) || 0) + 1;
+  }
+
+  return robo.path.join(",");
+};
+
+const format = (sequence) =>
+  sequence.split(",").flatMap((x) => [+x.charCodeAt(), 44]);
+
+const runRoutines = (program) => {
+  const sequences =
+    "A,B,A,C,A,C,B,C,C,B,\n,L,4,L,4,L,10,R,4,\n,R,4,L,4,L,4,R,8,R,10,\n,R,4,L,10,R,10";
+  const routines = format(sequences).slice(0, -1);
+  console.log(routines);
+  sprint(program, routines);
+};
 
 const input = Deno.readTextFileSync("input.txt");
 // console.log(visualize(input));
-console.log(findInterSections(input));
+// console.log(findInterSections(input));
+// console.log(getRouteMap(input));
+
+runRoutines(input);
