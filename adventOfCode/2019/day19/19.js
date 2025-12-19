@@ -91,57 +91,107 @@ export const sprint = (corruptedMemory, inputs, pointer = 0) => {
   return result.outputs.at(-1);
 };
 
-const noOfBeamPoints = (program) => {
-  let count = 0;
-  for (let i = 0; i < 50; i++) {
-    for (let j = 0; j < 50; j++) {
+const noOfBeamPoints = (program, max = 50) => {
+  // const rows = [];
+  for (let i = 0; i < max; i++) {
+    let row = i;
+    for (let j = 0; j < max + max; j++) {
       const result = sprint(program, [i, j]);
-      count += result === 1 ? 1 : 0;
+      row += result === 1 ? "#" : ".";
     }
+    console.log(row);
   }
 
-  return count;
+  // return rows.join("\n");
+};
+
+const noOfxs = (program, max = 50) => {
+  const rows = [];
+  for (let i = 2; i < max; i++) {
+    let j = 0;
+    let result = sprint(program, [i, j]);
+    while (result !== 1) {
+      j++;
+      result = sprint(program, [i, j]);
+    }
+    let k = j;
+    while (result === 1) {
+      k++;
+      result = sprint(program, [i, k]);
+    }
+    console.log(`${i},${j} -> ${k - j}`);
+  }
+
+  return rows.join("\n");
 };
 
 const closestShipPoint = (program) => {
-  const beamOf = (x, y) => sprint(program, [x, y]);
-  let x = 0;
-  for (let y = 0;; y++) {
-    while (beamOf(x, y) === 0) {
+  const beamOf = (x, y) => sprint(program, [y, x]);
+  let x = 413;
+  let y = 291;
+  while (true) {
+    let result = beamOf(x, y);
+    console.log(y, x);
+    while (result === 0) {
       x++;
+      result = beamOf(x, y);
     }
 
-    if (y >= 99 && beamOf(x + 99, y) === 1 && beamOf(x, y + 99) === 1) {
-      return x * 10000 + y;
+    if (beamOf(x + 99, y) !== 1) {
+      x++;
+      continue;
     }
+
+    if (beamOf(x, y + 99) !== 1) {
+      y++;
+      continue;
+    }
+
+    return x * 10000 + y;
   }
 };
 
-let x = 0;
-const cache = new Map();
+const beam = (program, x, y) => sprint(program, [x, y]);
 
-const beam = (program, x, y) => {
-  const key = (x << 16) | y;
-  if (!cache.has(key)) {
-    cache.set(key, sprint(program, [x, y]));
-  }
-  return cache.get(key);
-};
-const closestShipPoin = (program) => {
-  for (let y = 0;; y++) {
-    while (beam(program, x, y) === 0) x++;
+// const closestShipPoin = (program) => {
+//   let min = 0;
+//   let max = 1000;
+//   for (let y = 0;; y++) {
+//     while (min < max && beam(program, min, y) === 0) {
+//       const mid = Math.floor((min + max) / 2);
+//       console.log(min);
+//       if (beam(program, max, y) === 0) {
+//         min = max;
+//         max += 10000;
+//         continue;
+//       }
+//       min = mid;
+//     }
 
-    if (
-      y >= 99 &&
-      beam(program, x, y + 99) === 1 &&
-      beam(program, x + 99, y) === 1
-    ) {
-      console.log(x * 10000 + y);
-      break;
-    }
-  }
-};
+//     if (
+//       y >= 99 &&
+//       beam(program, x, y + 99) === 1 &&
+//       beam(program, x + 99, y) === 1
+//     ) {
+//       return x * 10000 + y;
+//     }
+//   }
+// };
 
 const input = Deno.readTextFileSync("input.txt");
 
-console.log(closestShipPoin(input));
+// console.log(closestShipPoint(input));
+
+// console.log(noOfBeamPoints(input, 300));
+// console.log(noOfxs(input, 300));
+
+// console.log(sprint(input, [702, 1136]));
+// console.log(sprint(input, [702, 1136 + 99]));
+// console.log(sprint(input, [702 + 99, 1136]));
+// console.log(sprint(input, [702 + 99, 1136 + 99]));
+// console.log(sprint(input, [289, 411]));
+// console.log(sprint(input, [291, 413]));
+console.log(sprint(input, [132049, 187373]));
+console.log(sprint(input, [132049, 187373 + 99]));
+console.log(sprint(input, [132049 + 99, 187373]));
+console.log(sprint(input, [132049 + 99, 187373 + 99]));
