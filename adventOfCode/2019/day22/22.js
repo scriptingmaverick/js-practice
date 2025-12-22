@@ -49,47 +49,66 @@ const shuffleWith = (techniqueList, deckLength) => {
   return deck.indexOf(2019);
 };
 
-function power(base, exp, mod) {
-  let res = 1n;
-  base = base % mod;
+const mod = (elem, modulo) => ((elem % modulo) + modulo) % modulo;
+
+const modularExponentiation = (base, exp, modulo) => {
+  let result = 1n;
+  base = mod(base, modulo);
   while (exp > 0n) {
-    if (exp % 2n === 1n) res = (res * base) % mod;
-    base = (base * base) % mod;
-    exp = exp / 2n;
+    if (exp % 2n) result = mod(result * base, modulo);
+    base = mod(base * base, modulo);
+    exp /= 2n;
   }
-  return res;
-}
 
-function getModularInverse(a, n) {
-  return power(a, n - 2n, n);
-}
+  return result;
+};
 
-const largeDeck = (techniqueList, deck) => {
-  let n = BigInt(deckSize);
-  const change = {
-    "increment": (exp, threshold) => {
-      exp.a = (exp.a * threshold) % deckLength;
-      exp.b = (exp.b * threshold) % deckLength;
+const modularInverse = (elem, exp) =>
+  modularExponentiation(elem, exp - 2n, exp);
+
+const largeDeckShuffle = (shuffles) => {
+  const deckSize = 119315717514047n;
+  const noOfShuffles = 101741582076661n;
+  const pos = 2020n;
+
+  const storage = { a: 1n, b: 0n };
+  const techniques = {
+    "increment": (storage, threshold) => {
+      storage.a = mod(storage.a * threshold, deckSize);
+      storage.b = mod(storage.b * threshold, deckSize);
     },
-    "cut": (exp, threshold) => exp.b = (exp.b - threshold) % deckLength,
-    "new": (exp) => {
-      exp.a = (-exp.a) % deckLength;
-      exp.b = (-exp.b - 1) % deckLength;
+    "new": (storage) => {
+      storage.a = mod(-storage.a, deckSize);
+      storage.b = mod(-storage.b - 1n, deckSize);
+    },
+    "cut": (storage, threshold) => {
+      storage.b = mod(storage.b - threshold, deckSize);
     },
   };
 
-  const exp = { a: 1, b: 0 };
-  let index = 0;
-  while (index < techniqueList.length) {
-    const [threshold, techniqueName] = techniqueList[index++].split(" ")
-      .reverse().slice(0, 2);
-
-    change[techniqueName](exp, threshold);
+  for (const line of shuffles) {
+    const [rawParam, techniqueName] = line.split(" ").reverse().slice(0, 2);
+    const threshold = !isNaN(Number(rawParam)) ? BigInt(rawParam) : 0n;
+    techniques[techniqueName](
+      storage,
+      threshold,
+    );
   }
+
+  // multiple shuffles
+  const aK = modularExponentiation(storage.a, noOfShuffles, deckSize);
+  const bK = mod(
+    storage.b * (aK - 1n) * modularInverse(storage.a - 1n, deckSize),
+    deckSize,
+  );
+
+  // result => pos = (ax + b) mod M
+  const result = mod((pos - bK) * modularInverse(aK, deckSize), deckSize);
+  return result.toString();
 };
 
 const main = (listOfTechniques, fn = shuffleWith, deckLength = 10007) => {
-  const techniques = listOfTechniques.split("\n");
+  const techniques = listOfTechniques.split("\r\n");
   return fn(techniques, deckLength);
 };
 
@@ -103,4 +122,4 @@ const example2 = `cut 6
 deal with increment 7
 deal into new stack`;
 
-console.log(main(input, largeDeck));
+console.log(main(input, largeDeckShuffle));
