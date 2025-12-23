@@ -23,7 +23,13 @@ const isLessThan = (number1, number2) => number1 < number2;
 
 const storeInput = (result, program, modes) => {
   const index = applyModes(modes, program, result, 1)[0];
-  program[index] = result.inputs.pop();
+  if (result.inputs.length > 0) {
+    program[index] = result.inputs.shift();
+  } else {
+    program[index] = -1;
+    result.isIdle = true;
+  }
+
   result.pointerPos += 2;
 };
 
@@ -78,34 +84,25 @@ export const sprint = (program, inputs, outputs, pointer = 0, rb = 0) => {
     inputs,
     outputs,
     rb,
+    isIdle: false,
   };
 
   while (!result.isHalted) {
     const cmd = program[result.pointerPos].toString().padStart(5, "0");
     const modes = cmd.slice(0, 3).split("").reverse();
     const opCode = cmd.slice(3);
-    // console.log("result -> ", result);
-    // console.log("cmd -> ", opCode, modes);
-    // prompt();
-    if (opCode.at(-1) === "3" && result.inputs.length === 0) {
+    if (opCode.at(-1) === "3" && result.isIdle) {
       return {
         pointer: result.pointerPos,
         program,
         rb,
         inputs,
         outputs: result.outputs,
+        isIdle: true,
       };
     }
+
     execute[opCode](result, program, modes);
-    if (opCode.at(-1) === "4") {
-      return {
-        pointer: result.pointerPos,
-        program,
-        rb,
-        inputs,
-        outputs: result.outputs,
-      };
-    }
   }
 
   return "halted";
@@ -130,37 +127,48 @@ const iniatializeComputers = (size, program) => {
 
 const runNetwork = (program, networkSize = 50) => {
   const computers = iniatializeComputers(networkSize, program);
-  let isPacketFound = false;
-  let result, i = 0;
-  while (!isPacketFound) {
-    const { program, inputs, outputs, rb, pointer } =
-      computers[i % networkSize];
-    result = sprint(
-      program,
-      inputs,
-      outputs,
-      pointer,
-      rb,
-    );
+  let lastNatX = null;
+  let lastNatY = null;
+  let lastYSentToZero = null;
+  while (true) {
+    let globalIdle = true;
+    for (let currentIndex = 0; currentIndex < networkSize; currentIndex++) {
+      const comp = computers[currentIndex];
 
-    console.log("came back result  -> ", result);
-    prompt()
-    if (result.outputs.length === 3 && result.outputs[0] === 255) {
-      isPacketFound = true;
+      if (comp.inputs.length > 0) globalIdle = false;
+      const result = sprint(
+        comp.program,
+        comp.inputs,
+        comp.outputs,
+        comp.pointer,
+        comp.rb,
+      );
+
+      comp.pointer = result.pointer;
+      comp.rb = result.rb;
+      if (result.outputs.length > 0) globalIdle = false;
+
+      while (comp.outputs.length >= 3) {
+        const dest = comp.outputs.shift();
+        const x = comp.outputs.shift();
+        const y = comp.outputs.shift();
+
+        if (dest === 255) {
+          lastNatX = x;
+          lastNatY = y;
+        } else {
+          computers[dest].inputs.push(x, y);
+        }
+      }
     }
 
-    computers[i] = {
-      program: result.program,
-      inputs: result.inputs.length > 0 ? result.inputs : [-1],
-      outputs: result.outputs,
-      rb: result.rb,
-      pointer: result.pointer,
-    };
+    if (globalIdle && lastNatY !== null) {
+      if (lastNatY === lastYSentToZero) return lastNatY;
 
-    i++;
+      computers[0].inputs.push(lastNatX, lastNatY);
+      lastYSentToZero = lastNatY;
+    }
   }
-
-  return result.outputs[2];
 };
 
 const main = () => {
