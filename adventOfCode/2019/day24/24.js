@@ -47,87 +47,90 @@ const getRating = (grid) => {
   }
   return calculateRating(currentGrid);
 };
+const getTileAt = (grids, level, r, c) => {
+  if (r === 2 && c === 2) return 0;
+  if (!grids[level]) return 0;
+  return grids[level][r][c] === "#" ? 1 : 0;
+};
 
-const emptyGrid = () => Array.from({ length: 5 }).map((_) => ".....".split(""));
+const countNeighbors = (grids, L, r, c) => {
+  let count = 0;
 
-const isBug = (tile) => tile === "#";
+  if (r === 0) count += getTileAt(grids, L - 1, 1, 2);
+  else if (r === 3 && c === 2) {
+    for (let i = 0; i < 5; i++) count += getTileAt(grids, L + 1, 4, i);
+  } else count += getTileAt(grids, L, r - 1, c);
 
-const getBugCount = (topTile, leftTile, rightTile, bottomTile) => {
-  let count = isBug(topTile) ? 1 : 0;
-  count += isBug(leftTile) ? 1 : 0;
-  count += isBug(rightTile) ? 1 : 0;
-  count += isBug(bottomTile) ? 1 : 0;
+  if (r === 4) count += getTileAt(grids, L - 1, 3, 2);
+  else if (r === 1 && c === 2) {
+    for (let i = 0; i < 5; i++) count += getTileAt(grids, L + 1, 0, i);
+  } else count += getTileAt(grids, L, r + 1, c);
+
+  if (c === 0) count += getTileAt(grids, L - 1, 2, 1);
+  else if (c === 3 && r === 2) {
+    for (let i = 0; i < 5; i++) count += getTileAt(grids, L + 1, i, 4);
+  } else count += getTileAt(grids, L, r, c - 1);
+
+  if (c === 4) count += getTileAt(grids, L - 1, 2, 3);
+  else if (c === 1 && r === 2) {
+    for (let i = 0; i < 5; i++) count += getTileAt(grids, L + 1, i, 0);
+  } else count += getTileAt(grids, L, r, c + 1);
+
   return count;
 };
 
-const countBugsInARow = (row) =>
-  row.join("").split("").reduce((sum, tile) => isBug(tile) ? sum++ : sum);
+const createRow = (currentLevel, grids, L, r) => {
+  let newRow = "";
+  for (let c = 0; c < 5; c++) {
+    if (r === 2 && c === 2) {
+      newRow += ".";
+      continue;
+    }
 
-const getNewTile = (prevTile, { cell, referenceTiles, row, col }) => {
-  const leftTile = col === 0 ? referenceTiles.leftTile : cell[row][col - 1];
-  const rightTile = col === 4 ? referenceTiles.rightTile : cell[row][col + 1];
-  const topTile = row === 0 ? referenceTiles.topTile : cell[row - 1][col];
-  const bottomTile = row === 4 ? referenceTiles.bottomTile : cell[row + 1][col];
-  const bugCount = getBugCount(topTile, leftTile, rightTile, bottomTile);
-
-  if (prevTile === "#") {
-    return bugCount === 1 ? "#" : ".";
+    const bugCount = countNeighbors(grids, L, r, c);
+    const isCurrentlyBug = currentLevel[r][c] === "#";
+    if (isCurrentlyBug && bugCount === 1) {
+      newRow += "#";
+    } else if (!isCurrentlyBug && (bugCount === 1 || bugCount === 2)) {
+      newRow += "#";
+    } else {
+      newRow += ".";
+    }
   }
-
-  return bugCount <= 2 && bugCount > 0 ? "#" : ".";
+  return newRow;
 };
 
-const getRow = (cell, referenceTiles, rowIndex) => {
-  let row = "";
-  for (let i = 0; i < 5; i++) {
-    row += getNewTile(cell[rowIndex][i], {
-      cell,
-      referenceTiles,
-      row: rowIndex,
-      col: i,
-    });
+const createNewLevel = (currentLevel, grids, L) => {
+  const nextLevel = [];
+  for (let r = 0; r < 5; r++) {
+    nextLevel.push(createRow(currentLevel, grids, L, r));
   }
 
-  return row;
+  return nextLevel;
 };
 
-const updateCell = (cell, referenceTiles) => {
-  const rows = [];
-  for (let i = 0; i < 5; i++) {
-    rows.push(getRow(cell, referenceTiles, i));
+const simulate = (initialGrid, minutes = 200) => {
+  let grids = { 0: initialGrid };
+
+  for (let m = 0; m < minutes; m++) {
+    const nextGrids = {};
+    const minL = Math.min(...Object.keys(grids).map(Number)) - 1;
+    const maxL = Math.max(...Object.keys(grids).map(Number)) + 1;
+
+    for (let L = minL; L <= maxL; L++) {
+      const currentLevel = grids[L] || Array(5).fill(".....");
+      nextGrids[L] = createNewLevel(currentLevel, grids, L);
+    }
+    grids = nextGrids;
   }
 
-  return rows;
+  return countTotalBugs(grids);
 };
 
-const updateInnerCells = (grids, maxRange) => {
-  for (let i = 0; i < maxRange; i++) {
-    const innerCell = grids[i];
-    const outerCell = grids[i + 1];
-    const leftTile = outerCell[2][1];
-    const rightTile = outerCell[2][3];
-    const topTile = outerCell[1][2];
-    const bottomTile = outerCell[3][2];
-
-    grids[i] = updateCell(innerCell, {
-      leftTile,
-      topTile,
-      bottomTile,
-      rightTile,
-    });
-  }
-};
-
-const diveIntoLevels = (grid, mins = 4) => {
-  const grids = [grid];
-  for (let i = 1; i <= Math.ceil(mins / 2); i++) {
-    grids.unshift(emptyGrid());
-    updateInnerCells(grids, i);
-    // updateOuterCells(grids, i);
-  }
-
-  return grids.map((x) => x.join("\n")).join("\n\n");
-};
+const countTotalBugs = (grids) =>
+  Object.values(grids).map((x) => x.join("")).join("").split("").filter((x) =>
+    x === "#"
+  ).length;
 
 const main = (fn = getRating) => {
   const input = Deno.readTextFileSync("input.txt").split("\n");
@@ -137,7 +140,7 @@ const main = (fn = getRating) => {
 ..#..
 #....`.split("\n");
 
-  return fn(example);
+  return fn(input);
 };
 
-console.log(main(diveIntoLevels));
+console.log(main(simulate));
