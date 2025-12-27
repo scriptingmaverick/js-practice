@@ -35,6 +35,7 @@ Figure out where the navigation instructions lead. What is the Manhattan distanc
 
 --- Part Two ---
 
+
 Before you can give the destination to the captain, you realize that the actual action meanings were printed on the back of the instructions the whole time.
 
 Almost all of the actions indicate how to move a waypoint which is relative to the ship's position:
