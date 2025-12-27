@@ -51,10 +51,10 @@ A floating bit is not connected to anything and instead fluctuates unpredictably
 
 For example, consider the following program:
 
-mask = 000000000000000000000000000000X1001X
-mem[42] = 100
-mask = 00000000000000000000000000000000X0XX
-mem[26] = 1
+  mask = 000000000000000000000000000000X1001X
+  mem[42] = 100
+  mask = 00000000000000000000000000000000X0XX
+  mem[26] = 1
 When this program goes to write to memory address 42, it first applies the bitmask:
 
 address: 000000000000000000000000000000101010  (decimal 42)
