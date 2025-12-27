@@ -32,11 +32,31 @@ const searchNextBus = (shuttleData) => {
   return nextBus.minWT * +nextBus.busId;
 };
 
+const calcEarliestTimeStamp = (busIds) => {
+  const buses = busIds
+    .split(",")
+    .map((x, i) => [x, i])
+    .filter((x) => x[0] !== "x")
+    .map((x) => [+x[0], x[1]]);
+
+  let step = buses[0][0];
+  let meetTime = 0;
+  for (let i = 1; i < buses.length; i++) {
+    while ((meetTime + buses[i][1]) % buses[i][0] !== 0) {
+      console.log("hiii");
+      meetTime += step;
+    }
+    step *= buses[i][0];
+  }
+
+  console.log(buses, meetTime);
+};
+
 const main = () => {
   const input = Deno.readTextFileSync("input.txt").split("\r\n");
   const example = `939
 7,13,x,x,59,x,31,19`.split("\n");
-  return searchNextBus(input);
+  return calcEarliestTimeStamp(input[1]);
 };
 
 console.log(main());
