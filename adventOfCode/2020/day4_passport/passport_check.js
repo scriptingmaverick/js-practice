@@ -8,15 +8,9 @@ const validateYear = (min, max, year) => {
   return +year >= min && +year <= max;
 };
 
-const validateHCL = (color) => {
-  if (color.length < 7 || color.length > 7) return;
-  return color.match(/^#[0-9a-f]+$/) !== null;
-};
+const validateHCL = (color) => color.match(/^#[0-9a-f]{6}$/) !== null;
 
-const validatePID = (id) => {
-  if (id.length !== 9) return;
-  return id.match(/^[0-9]+$/) !== null;
-};
+const validatePID = (id) => id.match(/^\d{9}$/) !== null;
 
 const validateECL = (color) =>
   ["amb", "blu", "brn", "gry", "grn", "hzl", "oth"].includes(color);
