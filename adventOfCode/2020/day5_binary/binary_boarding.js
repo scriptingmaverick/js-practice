@@ -3,12 +3,10 @@ const parse = (binaryPass) => {
   const seatRange = { min: 0, max: 7 };
   const goTo = {
     F: (range) => {
-      const mid = Math.floor((range.min + range.max) / 2);
-      range.max = mid;
+      range.max = Math.floor((range.min + range.max) / 2);
     },
     B: (range) => {
-      const mid = Math.ceil((range.min + range.max) / 2);
-      range.min = mid;
+      range.min = Math.ceil((range.min + range.max) / 2);
     },
   };
 
@@ -36,7 +34,7 @@ const highestSeatIdIn = (boardingPasses) => {
   for (let i = 28; i < 842; i++) {
     if (!(i in seatIds) && i - 1 in seatIds && i + 1 in seatIds) return i;
   }
-  
+
   return maxSeatId;
 };
 
