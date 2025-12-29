@@ -18,8 +18,7 @@ import * as fs from "node:fs";
 
 // console.log("fd -> ", fileData);
 
-//////
-export let fil = fs.readFile("./file1", "utf-8", (err, data) => fil = data);
+export let fil = fs.readFile("./file1", "utf-8", (err, data) => (fil = data));
 setTimeout(() => {
   console.log(fil);
 }, 1000);
