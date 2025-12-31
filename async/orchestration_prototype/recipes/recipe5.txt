@@ -1,0 +1,4 @@
+./tasks/task1
+./tasks/task3,./tasks/task1
+./tasks/task5
+./tasks/task2

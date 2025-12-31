@@ -1,0 +1,4 @@
+./tasks/taks1,
+./tasks/taks1,./tasks/taks5,
+./tasks/taks2,
+./tasks/taks3
