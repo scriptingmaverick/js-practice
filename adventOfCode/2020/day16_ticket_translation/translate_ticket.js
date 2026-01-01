@@ -1,3 +1,4 @@
+import { permutations } from "jsr:/@std/collections/permutations";
 const parseDoc = (document) =>
   document
     .map((x) => (x === "" ? "->" : x))
@@ -14,7 +15,7 @@ const parseRules = (rules) =>
   rules.map((x) => {
     const [type, ranges] = x.split(": ");
     const [min, max] = ranges.split(" or ");
-    return { type: type.slice(0, -1), range: getRange(min, max) };
+    return { type: type, range: getRange(min, max) };
   });
 
 const assignValues = ([min, max], range) => {
@@ -45,8 +46,9 @@ const parseTicketsOf = (neighbours) =>
 const calculateErrorRate = (range, tickets, canReturnValidTickets = false) => {
   const invalidTickets = tickets
     .map((x) => x.filter((y) => !(y in range)))
-    .filter((x) => x.length > 0).flat();
-  const validTickets = tickets.filter((x) => !(x.some((y) => !(y in range))));
+    .filter((x) => x.length > 0)
+    .flat();
+  const validTickets = tickets.filter((x) => !x.some((y) => !(y in range)));
 
   console.log(tickets.length);
   return canReturnValidTickets
@@ -60,32 +62,75 @@ const translateTicket = (document, canReturnTicketsSum = true) => {
   const range = makeRangeOn(ruleSet);
   const nearByTickets = parseTicketsOf(neighbourTickets);
 
-  return canReturnTicketsSum ? calculateErrorRate(range, nearByTickets) : [
-    ruleSet,
-    myTicket.split(":\n")[1].split(",").map(Number),
-    calculateErrorRate(range, nearByTickets, !canReturnTicketsSum),
-  ];
+  return canReturnTicketsSum
+    ? calculateErrorRate(range, nearByTickets)
+    : [
+        ruleSet,
+        myTicket.split(":\n")[1].split(",").map(Number),
+        calculateErrorRate(range, nearByTickets, !canReturnTicketsSum),
+      ];
 };
 
 const findDepartureFields = (document) => {
   const [ruleSet, myTicket, validTickets] = translateTicket(document, false);
-  console.log(ruleSet);
-  console.log("my ticket -> ", myTicket);
-  console.log(validTickets.length);
-  // const fieldsMatchForDept = ruleSet.map((rule) => {
-  //   const range = rule.range;
-  //   const elements = myTicket.filter((x) =>
-  //     (x >= range[0][0] && x <= range[0][1]) ||
-  //     (x >= range[1][0] && x <= range[1][1])
-  //   );
-  //   return elements;
-  // });
+  const numCols = myTicket.length;
 
-  // return fieldsMatchForDept;
+  // 1. Build a list of possible Rule Indices for each Column
+  let possibilities = [];
+  for (let col = 0; col < numCols; col++) {
+    let colOptions = [];
+
+    for (let r = 0; r < ruleSet.length; r++) {
+      const [[min1, max1], [min2, max2]] = ruleSet[r].range;
+
+      // Check if every valid ticket satisfies this specific rule index
+      const fits = validTickets.every((ticket) => {
+        const val = ticket[col];
+        return (val >= min1 && val <= max1) || (val >= min2 && val <= max2);
+      });
+
+      if (fits) colOptions.push(r);
+    }
+    possibilities[col] = colOptions;
+  }
+
+  // 2. Narrow down the possibilities (Elimination)
+  const finalMapping = new Array(numCols).fill(-1);
+  const usedRuleIndices = new Set();
+
+  // We solve columns with the fewest options first
+  const sortedColIndices = [...Array(numCols).keys()].sort(
+    (a, b) => possibilities[a].length - possibilities[b].length
+  );
+
+  for (const colIdx of sortedColIndices) {
+    const ruleIdx = possibilities[colIdx].find(
+      (idx) => !usedRuleIndices.has(idx)
+    );
+    finalMapping[colIdx] = ruleIdx;
+    usedRuleIndices.add(ruleIdx);
+  }
+
+  // 3. Final Calculation
+  // We need to know which rule indices (0-19) correspond to "departure"
+  // In your original input, the first 6 rules are usually the "departure" ones.
+  let result = BigInt(1);
+
+  finalMapping.forEach((ruleIdx, colIdx) => {
+    // If your first 6 rules are the 'departure' ones:
+    if (ruleIdx >= 0 && ruleIdx <= 5) {
+      console.log(
+        `Rule ${ruleIdx} is at Column ${colIdx}. Value: ${myTicket[colIdx]}`
+      );
+      result *= BigInt(myTicket[colIdx]);
+    }
+  });
+
+  return result.toString();
 };
 
-const main = (fn = translateTicket) => {
-  const input = Deno.readTextFileSync("input.txt").split("\n");
+export const main = (fn = translateTicket) => {
+  const input = Deno.readTextFileSync("input.txt").split("\r\n");
   const example = `class: 1-3 or 5-7
 row: 6-11 or 33-44
 seat: 13-40 or 45-50
