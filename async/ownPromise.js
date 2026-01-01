@@ -22,4 +22,6 @@ class MyPromise {
   }
 }
 
-const p = new MyPromise((r)=>setTimeout(()=>r(1000),2000)).then(x=>console.log(x))
+const p = new MyPromise((r) => setTimeout(() => r(1000), 2000)).then((x) =>
+  console.log(x)
+);
