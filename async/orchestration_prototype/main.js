@@ -1,5 +1,5 @@
 const contentsOf = (file) =>
-  Deno.readTextFile(file + ".txt").then((x) => x.split(",\r\n"));
+  Deno.readTextFile(file + ".txt").then((x) => x.split(",\n"));
 
 const parseNameIn = (data) => data.slice(data.lastIndexOf("/") + 1);
 
@@ -16,12 +16,12 @@ const execute = async (tasks) => {
     const start = Date.now();
 
     startOf(taskName);
-    await delay(500);
 
     const data = await Deno.readTextFile(task + ".txt");
-    const end = Date.now();
-    log.push({ type, msg: data.trim(), duration: end - start });
 
+    const end = Date.now();
+
+    log.push({ type, data: data.trim(), start, end });
     endOf(taskName);
   });
 
@@ -38,7 +38,7 @@ const cookRecipe = async (recipeFile) => {
 
   for (const task of tasks) {
     mainLog.push(await execute(task.split(",")));
-    await new Promise((res) => setTimeout(res, 500));
+    await Promise.resolve();
   }
 
   console.log(mainLog.flat());
@@ -59,7 +59,7 @@ const runManifest = async (manifestFile) => {
   for (const manifest of manifests) {
     const recipes = manifest.split(",");
     const result = await Promise.all(
-      recipes.map((recipe) => cookRecipe(recipe))
+      recipes.map((recipe) => cookRecipe(recipe)),
     );
 
     returnFeed(result);
