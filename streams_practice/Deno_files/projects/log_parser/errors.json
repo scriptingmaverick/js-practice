@@ -1,0 +1,22 @@
+[
+{
+  "time": "12:08:24 pm",
+  "message": "ERROR: db connection failed.",
+  "level": "ERROR"
+},
+{
+  "time": "12:08:24 pm",
+  "message": "ERROR: internet stopped.",
+  "level": "ERROR"
+},
+{
+  "time": "12:08:24 pm",
+  "message": "ERROR: db connection failed.",
+  "level": "ERROR"
+},
+{
+  "time": "12:08:24 pm",
+  "message": "ERROR: internet stopped.",
+  "level": "ERROR"
+}
+]
