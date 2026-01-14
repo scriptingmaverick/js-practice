@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "run" : {
+      "command": "deno -A main.js",
+      "dependencies": ["setup"]
+    },
+    "setup":"deno -A setup.js"
+  }
+}

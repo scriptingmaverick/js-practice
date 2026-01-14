@@ -1,0 +1,12 @@
+create table student(
+  id integer primary key autoincrement,
+  name varchar(50),
+  age integer,
+  subject text
+);
+
+insert into student(name,age,subject) values ('tom',15,'judo'),('humeria',11,'science');
+insert into student(name,age,subject) values('kavi',11,'physics');
+insert into student(name,age,subject) values('javier',10,'judo');
+
+select * from student;
