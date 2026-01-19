@@ -1,6 +1,4 @@
 import { select, Separator } from "@inquirer/prompts";
-// Or
-// import select, { Separator } from '@inquirer/select';
 
 const answer = await select({
   message: "Select a package manager",

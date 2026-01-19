@@ -29,15 +29,17 @@ const showFn = () => {
   console.log("\nrows fetched successfully.");
 };
 
-while (true) {
-  const userPrompt = prompt(
-    "\nselec any option :\t1) select \t\t2) insert \t\t3) exit : ",
-  );
-  const choices = {
-    1: showFn,
-    2: insertFn,
-    3: () => Deno.exit(0),
-  };
+// while (true) {
+//   const userPrompt = prompt(
+//     "\nselec any option :\t1) select \t\t2) insert \t\t3) exit : ",
+//   );
+//   const choices = {
+//     1: showFn,
+//     2: insertFn,
+//     3: () => Deno.exit(0),
+//   };
 
-  choices[userPrompt]();
-}
+//   choices[userPrompt]();
+// }
+
+console.log(db);
