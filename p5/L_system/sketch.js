@@ -7,7 +7,7 @@ function setup() {
 
   const x = width / 2;
   const y = height;
-  system = lSystems[0];
+  system = lSystems[1];
 
   const angle = system.angle;
 

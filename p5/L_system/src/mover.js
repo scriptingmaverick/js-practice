@@ -22,9 +22,14 @@ class Mover {
     }
   }
 
+  randomColor() {
+    return [random(0, 123), random(0, 123), random(0, 123)];
+  }
+
   move() {
     this.prev = this.pos.copy();
 
+    stroke(...this.randomColor());
     const step = p5.Vector.fromAngle(this.theta).setMag(this.delta);
     this.pos.add(step);
 
