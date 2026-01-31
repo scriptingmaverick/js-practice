@@ -6,7 +6,7 @@ function setup() {
   createCanvas(400, 400);
   frameRate(200);
 
-  system = lSystems[2];
+  system = randomizedLsystems[5];
 
   const x = width / 2;
   const y = height;
