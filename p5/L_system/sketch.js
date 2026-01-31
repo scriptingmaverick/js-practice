@@ -4,23 +4,24 @@ let mover, sentence, system;
 
 function setup() {
   createCanvas(400, 400);
+  frameRate(200);
+
+  system = lSystems[2];
 
   const x = width / 2;
   const y = height;
-  system = lSystems[4];
-
   const angle = system.angle;
+  mover = new Turtle(x, y, system.step, angle);
 
-  mover = new Mover(x, y, system.step, angle);
+  const Lsys = new Lsystem(system);
+  sentence = Lsys.getNextElem();
 
-  sentence = generateSentence(system);
-  sentence = getNextElem(sentence);
   background(220);
 }
 
 function draw() {
-  const el = sentence.next().value;
-  if (el === undefined) frameRate(0);
-  mover.commands[el]?.();
-  frameRate(200)
+  const next = sentence.next();
+
+  if (next.done) noLoop();
+  mover.commands[next.value]?.();
 }

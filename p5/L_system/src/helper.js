@@ -1,21 +1,27 @@
-const getNewSentence = (prevSentence, rules) => {
-  let sentence = "";
-  for (const ch of prevSentence) {
-    sentence += rules[ch] || ch;
+class Lsystem {
+  constructor({ axiom, rules, iterations }) {
+    this.sentence = axiom;
+    this.rules = rules;
+    this.iterations = iterations;
+    this.generateSentence();
   }
 
-  return sentence;
-};
+  iterateOver() {
+    let next = "";
+    for (const ch of this.sentence) {
+      next += this.rules[ch] || ch;
+    }
 
-const generateSentence = ({ axiom, rules, iterations }) => {
-  let sentence = axiom;
-  for (let i = 0; i < iterations; i++) {
-    sentence = getNewSentence(sentence, rules);
+    this.sentence = next;
   }
 
-  return sentence;
-};
+  generateSentence() {
+    for (let i = 0; i < this.iterations; i++) {
+      this.iterateOver();
+    }
+  }
 
-function* getNextElem(sequence) {
-  for (const el of sequence) yield el;
+  *getNextElem() {
+    for (const el of this.sentence) yield el;
+  }
 }
