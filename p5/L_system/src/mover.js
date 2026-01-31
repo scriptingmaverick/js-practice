@@ -1,7 +1,7 @@
 class Mover {
   constructor(x, y, step, angle) {
     this.theta = -HALF_PI;
-    this.delta = step;
+    this.delta = step * 1.5;
     this.pos = createVector(x, y);
     this.prev = this.pos.copy();
     this.states = [];
@@ -15,7 +15,7 @@ class Mover {
       "]": this.rollBack.bind(this),
     };
 
-    this.sentence = sentence;
+    this.color = this.randomColor();
   }
 
   randomColor() {
@@ -23,9 +23,9 @@ class Mover {
   }
 
   move() {
+    stroke(...this.color);
     this.prev = this.pos.copy();
-
-    stroke(...this.randomColor());
+    strokeWeight(this.delta * 0.2);
     const step = p5.Vector.fromAngle(this.theta).setMag(this.delta);
     this.pos.add(step);
 
@@ -41,13 +41,20 @@ class Mover {
       pos: this.pos.copy(),
       prev: this.prev.copy(),
       theta: this.theta,
+      delta: this.delta,
+      color: this.color,
     });
+
+    this.color = this.randomColor();
+    this.delta = max(this.delta - 0.6, 0.5);
   }
 
   rollBack() {
-    const { pos, prev, theta } = this.states.pop();
+    const { pos, prev, theta, delta, color } = this.states.pop();
     this.pos = pos;
     this.prev = prev;
     this.theta = theta;
+    this.delta = delta;
+    this.color = color;
   }
 }
