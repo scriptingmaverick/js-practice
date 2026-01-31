@@ -15,3 +15,7 @@ const generateSentence = ({ axiom, rules, iterations }) => {
 
   return sentence;
 };
+
+function* getNextElem(sequence) {
+  for (const el of sequence) yield el;
+}

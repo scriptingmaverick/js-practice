@@ -1,7 +1,7 @@
 class Mover {
-  constructor(x, y, angle) {
+  constructor(x, y, step, angle) {
     this.theta = -HALF_PI;
-    this.delta = 15;
+    this.delta = step;
     this.pos = createVector(x, y);
     this.prev = this.pos.copy();
     this.states = [];
@@ -14,12 +14,8 @@ class Mover {
       "[": this.store.bind(this),
       "]": this.rollBack.bind(this),
     };
-  }
 
-  lMovements(sentence) {
-    for (const el of sentence) {
-      this.commands[el]?.();
-    }
+    this.sentence = sentence;
   }
 
   randomColor() {

@@ -7,17 +7,20 @@ function setup() {
 
   const x = width / 2;
   const y = height;
-  system = lSystems[4];
+  system = lSystems[0];
 
   const angle = system.angle;
 
-  mover = new Mover(x, y, angle);
+  mover = new Mover(x, y, system.step, angle);
 
   sentence = generateSentence(system);
+  sentence = getNextElem(sentence);
+  background(220);
 }
 
 function draw() {
-  background(220);
-  mover.lMovements(sentence);
-  frameRate(0);
+  const el = sentence.next().value;
+  if (el === undefined) frameRate(0);
+  mover.commands[el]?.();
+  frameRate(200)
 }
