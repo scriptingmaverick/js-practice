@@ -20,8 +20,8 @@ function setup() {
 }
 
 function draw() {
-  const next = sentence.next();
+  // const next = sentence.next();
 
-  if (next.done) noLoop();
-  mover.commands[next.value]?.();
+  // if (next.done) noLoop();
+  // mover.commands[next.value]?.();
 }

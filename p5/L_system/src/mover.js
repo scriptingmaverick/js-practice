@@ -1,4 +1,4 @@
-class Turtle {
+class Turtle  {
   constructor(x, y, step, angle) {
     this.theta = -HALF_PI;
     this.delta = step * 1.5;
