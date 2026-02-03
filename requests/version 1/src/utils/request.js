@@ -41,8 +41,8 @@ export class Request {
   async createResponse() {
     const response = new Response();
     const convert = {
-      "html": (data) => response.setHTML(data),
-      "json": (data) => response.setJSON(data),
+      "html": () => response.setHTML(),
+      "json": () => response.setJSON(),
     };
 
     if (this.path in PAGES) {
@@ -50,6 +50,7 @@ export class Request {
       const type = PAGES[this.path].slice(-4);
 
       convert[type]();
+      
       return response.success({ protocol: this.protocol }, data, 200);
     }
 

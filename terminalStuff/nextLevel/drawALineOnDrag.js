@@ -24,16 +24,19 @@ const distBtw = (p1, p2) => {
 };
 
 const drawAline = (point1, point2) => {
-  const connPoint = { y: point1.y, x: point2.x };
-  const oppSideLength = distBtw(point2, connPoint);
-  const adjSideLength = distBtw(connPoint, point1);
+  const [topPoint, lowerPoint] = point1.y > point2.y
+    ? [point1, point2]
+    : [point2, point1];
+  const connPoint = { y: lowerPoint.y, x: topPoint.x };
+  const oppSideLength = distBtw(topPoint, connPoint);
+  const adjSideLength = distBtw(connPoint, lowerPoint);
   const hypotenuse = Math.round(
     Math.sqrt(Math.pow(oppSideLength, 2) + Math.pow(adjSideLength, 2)),
   );
 
-  let { x, y } = point1;
-  console.log({ point1, x, y, point2, hypotenuse });
-  while (x < point2.x - 1 && y < point2.y - 1) {
+  let { x, y } = topPoint;
+  console.log({ x, y, lowerPoint, hypotenuse });
+  while (x < lowerPoint.x && y < lowerPoint.y) {
     const sinTheta = Math.round(adjSideLength / hypotenuse);
     const cosTheta = Math.round(oppSideLength / hypotenuse);
     x += Math.round(Math.cos(cosTheta)) * 1;
@@ -62,8 +65,8 @@ while (true) {
 
   const [btn, x, y] = data.split(";");
 
-  if (btn === "0" && !isDragging) isDragging = true;
-  else if (btn === "0" && isDragging) {
+  if (btn === "0" && input.at(-1) === "M" && !isDragging) isDragging = true;
+  else if (btn === "0" && input.at(-1) === "m" && isDragging) {
     // console.log(path);
     drawAline(path[0], path.at(-1));
     isDragging = false;
