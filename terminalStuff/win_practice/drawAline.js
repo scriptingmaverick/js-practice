@@ -41,7 +41,7 @@ const drawAtPoints = (p1, p2) => {
   // }
 };
 
-Deno.stdin.setRaw(true);
+Deno.stdin.setRaw(true, { cbreak: true });
 
 await Deno.stdout.write(encode("\x1b[?1003h\x1b[?1006h"));
 
