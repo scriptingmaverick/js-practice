@@ -67,8 +67,8 @@ const failedResponse = () => {
 const parseReqLine = (reqLine) => reqLine.split(" ");
 
 const pages = {
-  "/news": "./news.html",
-  "/fruits": "./fruits.html",
+  "/news": "../news.html",
+  "/fruits": "../fruits.html",
 };
 
 const handleRequest = (requestLine, headers, body) => {
