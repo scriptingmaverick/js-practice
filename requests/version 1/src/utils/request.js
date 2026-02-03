@@ -1,4 +1,4 @@
-import { decode } from "./helper.js";
+import { decode, encode } from "./helper.js";
 import { Response } from "./response.js";
 
 const PAGES = {
@@ -6,6 +6,7 @@ const PAGES = {
   "/fruits": "./pages/fruits.html",
   "/news": "./pages/news.html",
   "/error": "./pages/error.html",
+  "/user": "./pages/user.json",
 };
 
 const parseHeaders = (rawHeaders) => {
@@ -44,20 +45,32 @@ const readRequestFrom = async (conn) => {
 const createResponse = async (request) => {
   const { path } = request;
   const response = new Response();
+  const convert = {
+    "html": (data) => response.setHTML(data),
+    "json": (data) => response.setJSON(data),
+  };
 
   if (path in PAGES) {
     const data = await Deno.readTextFile(PAGES[path]);
-    response.setHTML(data);
-    return response.success(request, 200);
+    const type = PAGES[path].slice(-4);
+
+    convert[type]();
+    return response.success(request, data, 200);
   }
 
-  return response.failure(request, 404);
+  response.setHTML(await Deno.readTextFile(PAGES["/error"]));
+  return response.failure(request, data, 404);
+};
+
+const write = async (response, conn) => {
+  await conn.write(encode(response));
+  await conn.close();
 };
 
 export const handleRequest = async (conn) => {
   const request = await readRequestFrom(conn);
 
   const response = await createResponse(request);
-  console.log(response);
-  await conn.close();
+
+  await write(response, conn);
 };

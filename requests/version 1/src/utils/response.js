@@ -1,25 +1,23 @@
 export class Response {
   #msg;
   #code;
-  #type;
   #headers;
   #body;
+  #protocol;
   constructor() {
     this.#msg = "";
     this.#code = 0;
-    this.#type = "";
     this.#headers = {};
     this.#body = "";
+    this.#protocol = "";
   }
 
-  setHTML(data) {
-    this.#type = "text/html";
-    this.#body = data;
+  setHTML() {
+    this.#headers["content-type"] = "text/html";
   }
 
-  setJSON(data) {
-    this.#type = "application/json";
-    this.#body = JSON.stringify(data);
+  setJSON() {
+    this.#headers["content-type"] = "application/json";
   }
 
   formatHeaders() {
@@ -31,24 +29,37 @@ export class Response {
     return data.join("\r\n");
   }
 
-  success({ protocol }, code) {
-    this.#headers.type = this.#type;
-    this.#headers.time = new Date();
-    this.#code = code;
-    this.#msg = "OK";
-
-    const responseLine = [protocol, this.#code, this.#msg].join(" ");
+  createResponse() {
+    const responseLine = [this.#protocol, this.#code, this.#msg].join(" ");
     const headers = this.formatHeaders();
     return [responseLine, headers, "", this.#body].join("\r\n");
   }
 
-  failure({ protocol }, code) {
+  success({ protocol }, data, code) {
+    this.#protocol = protocol;
+
+    this.#headers["content-length"] = this.#body.length;
+    this.#headers.date = new Date();
+
     this.#code = code;
-    this.#headers.time = new Date();
+    this.#msg = "OK";
+
+    this.#body = data;
+
+    return this.createResponse();
+  }
+
+  failure({ protocol }, data, code) {
+    this.#protocol = protocol;
+
+    this.#headers.date = new Date();
+    this.#headers["content-length"] = this.#body.length;
+
+    this.#code = code;
     this.#msg = "Not Found";
 
-    const responseLine = [protocol, code, this.#msg].join(" ");
-    const headers = this.formatHeaders();
-    return [responseLine, headers, "", this.#body].join("\r\n");
+    this.#body = data;
+
+    return this.createResponse();
   }
 }
