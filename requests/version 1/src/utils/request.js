@@ -9,30 +9,54 @@ const PAGES = {
   "/user": "./pages/user.json",
 };
 
-const parseHeaders = (rawHeaders) => {
-  const headers = {};
-  for (const header of rawHeaders) {
-    const index = header.indexOf(":");
-    const key = header.slice(0, index);
-    const value = header.slice(index + 1);
+export class Request {
+  method;
+  protocol;
+  headers;
+  path;
+  body;
 
-    headers[key] = value.trim();
+  constructor(request) {
+    const data = request.split("\r\n");
+    [this.method, this.path, this.protocol] = data[0].split(" ");
+
+    const bodyStartIndex = data.indexOf("");
+
+    this.#parseHeaders(data.slice(1, bodyStartIndex));
+    this.body = data.slice(bodyStartIndex + 1);
   }
 
-  return headers;
-};
+  #parseHeaders(rawHeaders) {
+    this.headers = {};
 
-const parseRequest = (request) => {
-  const data = request.split("\r\n");
-  const [method, path, protocol] = data[0].split(" ");
+    for (const header of rawHeaders) {
+      const index = header.indexOf(":");
+      const key = header.slice(0, index);
+      const value = header.slice(index + 1);
 
-  const bodyStartIndex = data.indexOf("");
+      headers[key] = value.trim();
+    }
+  }
 
-  const headers = data.slice(1, bodyStartIndex);
-  const body = data.slice(bodyStartIndex + 1);
+  async createResponse() {
+    const response = new Response();
+    const convert = {
+      "html": (data) => response.setHTML(data),
+      "json": (data) => response.setJSON(data),
+    };
 
-  return { method, path, protocol, headers: parseHeaders(headers), body };
-};
+    if (this.path in PAGES) {
+      const data = await Deno.readTextFile(PAGES[this.path]);
+      const type = PAGES[this.path].slice(-4);
+
+      convert[type]();
+      return response.success({ protocol: this.protocol }, data, 200);
+    }
+
+    response.setHTML(await Deno.readTextFile(PAGES["/error"]));
+    return response.failure({ protocol: this.protocol }, data, 404);
+  }
+}
 
 const readRequestFrom = async (conn) => {
   const buffer = new Uint8Array(1024);
@@ -42,35 +66,16 @@ const readRequestFrom = async (conn) => {
   return parseRequest(data);
 };
 
-const createResponse = async (request) => {
-  const { path } = request;
-  const response = new Response();
-  const convert = {
-    "html": (data) => response.setHTML(data),
-    "json": (data) => response.setJSON(data),
-  };
-
-  if (path in PAGES) {
-    const data = await Deno.readTextFile(PAGES[path]);
-    const type = PAGES[path].slice(-4);
-
-    convert[type]();
-    return response.success(request, data, 200);
-  }
-
-  response.setHTML(await Deno.readTextFile(PAGES["/error"]));
-  return response.failure(request, data, 404);
-};
-
 const write = async (response, conn) => {
   await conn.write(encode(response));
   await conn.close();
 };
 
 export const handleRequest = async (conn) => {
-  const request = await readRequestFrom(conn);
+  const requestData = await readRequestFrom(conn);
+  const request = new Request(requestData);
 
-  const response = await createResponse(request);
+  const response = await request.createResponse();
 
   await write(response, conn);
 };
