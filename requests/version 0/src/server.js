@@ -60,28 +60,27 @@ const failedResponse = () => {
   return [
     responseLine,
     formatHeaders(headers),
-    Deno.readTextFileSync("./error.html"),
+    Deno.readTextFileSync(pages["/error"]),
   ];
 };
 
 const parseReqLine = (reqLine) => reqLine.split(" ");
 
 const pages = {
-  "/news": "../news.html",
-  "/fruits": "../fruits.html",
+  "/news": "./pages/news.html",
+  "/fruits": "./pages/fruits.html",
+  "/": "./pages/welcome.html",
+  "/error": "./pages/error.html",
 };
 
 const handleRequest = (requestLine, headers, body) => {
   const [method, request_path, protocol] = parseReqLine(requestLine);
 
-  if (request_path === "/") {
-    const data = Deno.readTextFileSync("welcome.html");
-    return format(...successResponse(data));
-  } else if (request_path in pages) {
+  if (request_path in pages) {
     const data = Deno.readTextFileSync(pages[request_path]);
     return format(...successResponse(data));
   } else {
-    return format(...failedResponse(), "");
+    return format(...failedResponse());
   }
 };
 
@@ -97,11 +96,9 @@ const handleConn = async (conn) => {
   await conn.close();
 };
 
-const main = async () => {
+export const main = async () => {
   const server = establishServer();
   for await (const conn of server) {
     await handleConn(conn);
   }
 };
-
-main();
