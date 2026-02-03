@@ -1,4 +1,12 @@
 import { decode } from "./helper.js";
+import { Response } from "./response.js";
+
+const PAGES = {
+  "/": "./pages/welcome.html",
+  "/fruits": "./pages/fruits.html",
+  "/news": "./pages/news.html",
+  "/error": "./pages/error.html",
+};
 
 const parseHeaders = (rawHeaders) => {
   const headers = {};
@@ -30,13 +38,26 @@ const readRequestFrom = async (conn) => {
   const n = await conn.read(buffer);
 
   const data = decode(buffer.subarray(0, n));
-
   return parseRequest(data);
+};
+
+const createResponse = async (request) => {
+  const { path } = request;
+  const response = new Response();
+
+  if (path in PAGES) {
+    const data = await Deno.readTextFile(PAGES[path]);
+    response.setHTML(data);
+    return response.success(request, 200);
+  }
+
+  return response.failure(request, 404);
 };
 
 export const handleRequest = async (conn) => {
   const request = await readRequestFrom(conn);
-  console.log(request);
 
-  await conn.close()
+  const response = await createResponse(request);
+  console.log(response);
+  await conn.close();
 };
