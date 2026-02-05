@@ -18,7 +18,6 @@ export const drawLine = (x1, y1, x2, y2) => {
     if (x === x2 && y === y2) break;
 
     const e2 = 2 * err;
-
     if (e2 > -dy) {
       err -= dy;
       x += sx;

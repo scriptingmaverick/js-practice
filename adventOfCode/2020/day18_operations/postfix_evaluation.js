@@ -1,5 +1,3 @@
-import console from "node:console";
-
 const putIntoStack = (stack, char) => {
   const operators = { "+": true, "*": true, "(": true };
   const edgeChars = { "(": true, undefined: true };
