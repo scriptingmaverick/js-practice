@@ -19,3 +19,9 @@ const decoder = new TextDecoder();
 export const decode = (text) => decoder.decode(text);
 const encoder = new TextEncoder();
 export const encode = (text) => encoder.encode(text);
+
+export const clearAgentScreen = async (conn) =>
+  await conn.write(encode("\x1b[2J\x1b[H"));
+
+export const jsonToStr = (json) => JSON.stringify(json);
+export const textToJson = (text) => JSON.parse(text);

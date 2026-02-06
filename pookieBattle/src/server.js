@@ -1,10 +1,5 @@
-import { decode, encode } from "./helper.js";
-
-const startGame = () => {
-  players.forEach(async ({ conn }) => {
-    await conn.write(encode("\x1b[2J\x1b[H game started..."));
-  });
-};
+import { startGame } from "./game_logics.js";
+import { clearAgentScreen, decode, encode } from "./helper.js";
 
 const createListener = () => {
   return Deno.listen({
@@ -15,7 +10,7 @@ const createListener = () => {
 const players = [];
 
 const read = async (conn, buffer) => {
-  await conn.write(encode("Enter the name: "));
+  await conn.write(encode("Enter UserName :"));
   const bytesRead = await conn.read(buffer);
   return decode(buffer.subarray(0, bytesRead)).trim();
 };
@@ -28,7 +23,7 @@ const handleConn = async (conn) => {
   if (players.length < 2) {
     await conn.write(encode("Waiting for opponent to join"));
   } else {
-    startGame();
+    startGame(players);
   }
 };
 
