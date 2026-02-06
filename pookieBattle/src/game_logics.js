@@ -1,3 +1,4 @@
+import { log } from "node:console";
 import { clearAgentScreen, decode, encode } from "./helper.js";
 
 class Player {
@@ -69,8 +70,17 @@ class Player {
           ),
         ),
       );
+    const mapper = (x, i) => `${i + 1}) ${x.name}`;
+    const index = await this.getChoice(
+      this.pokemonList,
+      mapper,
+      "Select a pokemon",
+    );
+    this.currentPookie = this.pokemonList[index];
+  }
 
-    const names = this.pokemonList.map(({ name }, i) => `${i + 1}) ${name}`)
+  async getChoice(choices, mapper, msg) {
+    const names = choices.map(mapper)
       .join(
         "\n",
       );
@@ -78,11 +88,19 @@ class Player {
     const buffer = new Uint8Array(1024);
     await this.conn.write(encode(names));
 
-    await this.conn.write(encode(`\nEnter your choice:`));
+    await this.conn.write(encode(`\n${msg}:`));
     const n = await this.conn.read(buffer);
 
     const index = parseInt(decode(buffer.subarray(0, n)));
-    this.currentPookie = this.pokemonList[index - 1];
+    return index - 1;
+  }
+
+  async selectMoves() {
+    const { moves } = this.currentPookie;
+    const mapper = (x, i) => `${i + 1}) ${x.move_name} (${x.type})`;
+    const index = await this.getChoice(moves, mapper, "Select a move");
+    const selectedMove = moves[index];
+    console.log(selectedMove);
   }
 }
 
@@ -120,6 +138,9 @@ const sleep = (ms) =>
   );
 
 const playRound = async (state) => {
+  const { currentPlayer, opponent } = state;
+  await currentPlayer.selectMoves();
+  await opponent.selectMoves();
 };
 
 const createRound = async (state, roundId) => {
