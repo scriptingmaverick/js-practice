@@ -9,7 +9,8 @@ const createListener = () => {
 };
 const players = [];
 
-const read = async (conn, buffer) => {
+const read = async (conn) => {
+  const buffer = new Uint8Array(1024);
   await conn.write(encode("Enter UserName :"));
   const bytesRead = await conn.read(buffer);
   return decode(buffer.subarray(0, bytesRead)).trim();
@@ -17,11 +18,13 @@ const read = async (conn, buffer) => {
 
 const handleConn = async (conn) => {
   const buffer = new Uint8Array(1024);
-  const name = await read(conn, buffer);
-  players.push({ name, conn });
-  console.log(players);
+  const n = await conn.read(buffer);
+  const consoleSize = JSON.parse(decode(buffer.subarray(0, n)));
+  const name = await read(conn);
+  players.push({ name, conn, consoleSize });
+  
   if (players.length < 2) {
-    await conn.write(encode("Waiting for opponent to join"));
+    await conn.write(encode("Waiting for opponent to join..."));
   } else {
     startGame(players);
   }

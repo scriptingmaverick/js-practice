@@ -1,12 +1,13 @@
-import { encode } from "./helper.js";
+import { clearAgentScreen, decode, encode } from "./helper.js";
 
 class Player {
-  constructor({ conn, name }) {
+  constructor({ conn, name, consoleSize }) {
     this.name = name;
     this.conn = conn;
     this.pokemonList = this.getPookies();
     this.score = 0;
     this.currentPookie = null;
+    this.consoleSize = consoleSize;
   }
 
   getPookies() {
@@ -56,6 +57,19 @@ class Player {
       ],
     }];
   }
+
+  async selectPokemon() {
+    const names = this.pokemonList.map(({ name }, i) => `${i + 1}) ${name}`)
+      .join(
+        "\n",
+      );
+    const buffer = new Uint8Array(1024);
+    await this.conn.write(encode(names));
+    await this.conn.write(encode(`\nEnter your choice:`));
+    const n = await this.conn.read(buffer);
+    const index = parseInt(decode(buffer.subarray(0, n)));
+    this.currentPookie = this.pokemonList[index - 1];
+  }
 }
 
 const switchTurn = (state) => {
@@ -71,7 +85,7 @@ const createObjects = (players) => {
 
 const display = (player) => {
   const data = player.pokemonList;
-  return JSON.stringify(data);
+  return "\n" + JSON.stringify(data);
 };
 
 const input = async (player) => {
@@ -79,15 +93,34 @@ const input = async (player) => {
   return;
 };
 
+const roundFormatter = (msg, { columns }) => {
+  const x = (columns - msg.length) / 2;
+  return " ".repeat(x) + msg;
+};
+
+const sleep = (ms) =>
+  new Promise((resolve) =>
+    setTimeout(() => {
+      resolve();
+    }, ms)
+  );
+
 export const startGame = async (players) => {
   const state = createObjects(players);
   let i = 0;
   while (true) {
     const { currentPlayer } = state;
+    await clearAgentScreen(currentPlayer.conn);
+    await currentPlayer.conn.write(
+      encode(
+        roundFormatter(`==> Round ${i + 1} <==\n`, currentPlayer.consoleSize),
+      ),
+    );
 
-    await input(currentPlayer);
-
+    await currentPlayer.selectPokemon();
+    console.log(currentPlayer.currentPookie);
+    await sleep(1500);
     switchTurn(state);
-    if (i++ === 2) break;
+    if (i++ === 7) break;
   }
 };
