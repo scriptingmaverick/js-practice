@@ -58,15 +58,29 @@ class Player {
     }];
   }
 
-  async selectPokemon() {
+  async selectPokemon(roundId) {
+    await clearAgentScreen(this.conn);
+    await this.conn
+      .write(
+        encode(
+          roundFormatter(
+            `==> Round ${roundId} <==\n`,
+            this.consoleSize,
+          ),
+        ),
+      );
+
     const names = this.pokemonList.map(({ name }, i) => `${i + 1}) ${name}`)
       .join(
         "\n",
       );
+
     const buffer = new Uint8Array(1024);
     await this.conn.write(encode(names));
+
     await this.conn.write(encode(`\nEnter your choice:`));
     const n = await this.conn.read(buffer);
+
     const index = parseInt(decode(buffer.subarray(0, n)));
     this.currentPookie = this.pokemonList[index - 1];
   }
@@ -105,22 +119,22 @@ const sleep = (ms) =>
     }, ms)
   );
 
+const playRound = async (state) => {
+};
+
+const createRound = async (state, roundId) => {
+  const { currentPlayer, opponent } = state;
+
+  await currentPlayer.selectPokemon(roundId);
+  await opponent.selectPokemon(roundId);
+
+  await playRound(state);
+};
+
 export const startGame = async (players) => {
   const state = createObjects(players);
   let i = 0;
-  while (true) {
-    const { currentPlayer } = state;
-    await clearAgentScreen(currentPlayer.conn);
-    await currentPlayer.conn.write(
-      encode(
-        roundFormatter(`==> Round ${i + 1} <==\n`, currentPlayer.consoleSize),
-      ),
-    );
-
-    await currentPlayer.selectPokemon();
-    console.log(currentPlayer.currentPookie);
-    await sleep(1500);
-    switchTurn(state);
-    if (i++ === 7) break;
+  while (i++ < 3) {
+    await createRound(state, i);
   }
 };
