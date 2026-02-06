@@ -96,11 +96,11 @@ class Player {
   }
 
   async selectMoves() {
-    const { moves } = this.currentPookie;
+    const { moves, hp } = this.currentPookie;
     const mapper = (x, i) => `${i + 1}) ${x.move_name} (${x.type})`;
-    const index = await this.getChoice(moves, mapper, "Select a move");
+    const index = await this.getChoice(moves, mapper, `${hp} -> Select a move`);
     const selectedMove = moves[index];
-    console.log(selectedMove);
+    return selectedMove;
   }
 }
 
@@ -137,10 +137,18 @@ const sleep = (ms) =>
     }, ms)
   );
 
+const isRoundDone = ({ currentPlayer, opponent }) =>
+  currentPlayer.currentPookie.hp > 0 && opponent.currentPookie.hp > 0;
+
 const playRound = async (state) => {
   const { currentPlayer, opponent } = state;
-  await currentPlayer.selectMoves();
-  await opponent.selectMoves();
+  while (isRoundDone(state)) {
+    const move1 = await currentPlayer.selectMoves();
+    const move2 = await opponent.selectMoves();
+
+    opponent.currentPookie.hp -= move1.effect * 3;
+    currentPlayer.currentPookie.hp -= move2.effect * 3;
+  }
 };
 
 const createRound = async (state, roundId) => {
