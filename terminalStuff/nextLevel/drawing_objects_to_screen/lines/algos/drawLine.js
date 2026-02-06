@@ -18,33 +18,50 @@ const distBtw = (p1, p2) => {
 };
 
 const drawAline = (point1, point2) => {
-  const [topPoint, lowerPoint] = point1.y > point2.y
-    ? [point1, point2]
-    : [point2, point1];
+  point1.x = +(point1.x);
+  point1.y = +(point1.y);
+  point2.x = +(point2.x);
+  point2.y = +(point2.y);
 
-  const connPoint = { y: lowerPoint.y, x: topPoint.x };
+  const deltaX = Math.abs(point1.x - point2.x);
+  const deltaY = Math.abs(point1.y - point2.y);
+  const steps = Math.max(deltaX, deltaY);
 
-  const oppSideLength = distBtw(topPoint, connPoint);
-  const adjSideLength = distBtw(connPoint, lowerPoint);
-
-  const hypotenuse = Math.round(
-    Math.sqrt(Math.pow(oppSideLength, 2) + Math.pow(adjSideLength, 2)),
-  );
-
-  let { x, y } = lowerPoint;
-  y = +y;
-  x = +x;
-  while (+y < +(topPoint.y)) {
-    const sinTheta = adjSideLength / hypotenuse;
-    const cosTheta = oppSideLength / hypotenuse;
-
-    x += sinTheta;
-    y += cosTheta;
-
+  const dx = (point1.x - point2.x) / steps;
+  const dy = (point1.y - point2.y) / steps;
+  let x = point2.x;
+  let y = point2.y;
+  for (let i = 0; i < steps; i++) {
+    x += dx;
+    y += dy;
     drawAt(Math.round(+x), Math.round(+y));
-
-    // console.log({ x, y });
   }
+
+  // const [topPoint, lowerPoint] = point1.y > point2.y
+  //   ? [point1, point2]
+  //   : [point2, point1];
+
+  // const connPoint = { y: lowerPoint.y, x: topPoint.x };
+
+  // const oppSideLength = distBtw(topPoint, connPoint);
+  // const adjSideLength = distBtw(connPoint, lowerPoint);
+
+  // const hypotenuse = Math.round(
+  //   Math.sqrt(Math.pow(oppSideLength, 2) + Math.pow(adjSideLength, 2)),
+  // );
+
+  // let { x, y } = lowerPoint;
+  // y = +y;
+  // x = +x;
+  // while (+y < +(topPoint.y)) {
+  //   const sinTheta = adjSideLength / hypotenuse;
+  //   const cosTheta = oppSideLength / hypotenuse;
+
+  //   x += sinTheta;
+  //   y += cosTheta;
+
+  //   drawAt(Math.round(+x), Math.round(+y));
+  // }
 };
 
 Deno.stdin.setRaw(true, { cbreak: true });

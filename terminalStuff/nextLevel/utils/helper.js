@@ -17,7 +17,9 @@ export const drawAt = async (x, y) => {
   // \x1b[y;xH moves cursor
   // \x1b[u restores cursor position
   const moveCursor = `\x1b[${y};${x}H`;
-  const char = format(x, `${moveCursor}.`);
+  const char = format(x, `${moveCursor}o`);
+
+  // const char = `\x1b[48;2;255;0;0;m${moveCursor}.\x1b[0m`;
   const packet = `\x1b[s${char}\x1b[u`;
   await Deno.stdout.write(encode(packet));
 };
