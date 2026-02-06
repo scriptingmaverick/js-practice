@@ -1,0 +1,122 @@
+[
+  {
+    "pokeId": 1,
+    "name": "Bulbasaur",
+    "hp": 520,
+    "moves": [
+      { "move_name": "Tackle", "type": "attack", "effect": 60 },
+      { "move_name": "Vine Whip", "type": "attack", "effect": 80 },
+      { "move_name": "Razor Leaf", "type": "attack", "effect": 95 },
+      { "move_name": "Growl", "type": "defense", "effect": 40 },
+      { "move_name": "Leech Seed", "type": "defense", "effect": 60 }
+    ]
+  },
+  {
+    "pokeId": 2,
+    "name": "Ivysaur",
+    "hp": 680,
+    "moves": [
+      { "move_name": "Vine Whip", "type": "attack", "effect": 90 },
+      { "move_name": "Razor Leaf", "type": "attack", "effect": 110 },
+      { "move_name": "Solar Beam", "type": "attack", "effect": 130 },
+      { "move_name": "Growl", "type": "defense", "effect": 50 },
+      { "move_name": "Synthesis", "type": "defense", "effect": 80 }
+    ]
+  },
+  {
+    "pokeId": 3,
+    "name": "Venusaur",
+    "hp": 950,
+    "moves": [
+      { "move_name": "Solar Beam", "type": "attack", "effect": 150 },
+      { "move_name": "Petal Dance", "type": "attack", "effect": 130 },
+      { "move_name": "Earth Power", "type": "attack", "effect": 120 },
+      { "move_name": "Growth", "type": "defense", "effect": 70 },
+      { "move_name": "Leech Seed", "type": "defense", "effect": 90 }
+    ]
+  },
+  {
+    "pokeId": 4,
+    "name": "Charmander",
+    "hp": 480,
+    "moves": [
+      { "move_name": "Scratch", "type": "attack", "effect": 60 },
+      { "move_name": "Ember", "type": "attack", "effect": 80 },
+      { "move_name": "Flame Burst", "type": "attack", "effect": 100 },
+      { "move_name": "Smokescreen", "type": "evade", "effect": 50 },
+      { "move_name": "Fire Spin", "type": "attack", "effect": 90 }
+    ]
+  },
+  {
+    "pokeId": 5,
+    "name": "Charmeleon",
+    "hp": 720,
+    "moves": [
+      { "move_name": "Slash", "type": "attack", "effect": 95 },
+      { "move_name": "Flamethrower", "type": "attack", "effect": 120 },
+      { "move_name": "Fire Fang", "type": "attack", "effect": 110 },
+      { "move_name": "Smokescreen", "type": "evade", "effect": 60 },
+      { "move_name": "Dragon Breath", "type": "attack", "effect": 100 }
+    ]
+  },
+  {
+    "pokeId": 6,
+    "name": "Charizard",
+    "hp": 1100,
+    "moves": [
+      { "move_name": "Flamethrower", "type": "attack", "effect": 140 },
+      { "move_name": "Fire Blast", "type": "attack", "effect": 160 },
+      { "move_name": "Dragon Claw", "type": "attack", "effect": 130 },
+      { "move_name": "Wing Attack", "type": "attack", "effect": 120 },
+      { "move_name": "Smokescreen", "type": "evade", "effect": 70 }
+    ]
+  },
+  {
+    "pokeId": 7,
+    "name": "Squirtle",
+    "hp": 540,
+    "moves": [
+      { "move_name": "Tackle", "type": "attack", "effect": 60 },
+      { "move_name": "Water Gun", "type": "attack", "effect": 80 },
+      { "move_name": "Bubble Beam", "type": "attack", "effect": 95 },
+      { "move_name": "Withdraw", "type": "defense", "effect": 70 },
+      { "move_name": "Rapid Spin", "type": "evade", "effect": 50 }
+    ]
+  },
+  {
+    "pokeId": 8,
+    "name": "Wartortle",
+    "hp": 740,
+    "moves": [
+      { "move_name": "Water Gun", "type": "attack", "effect": 90 },
+      { "move_name": "Bubble Beam", "type": "attack", "effect": 110 },
+      { "move_name": "Aqua Tail", "type": "attack", "effect": 120 },
+      { "move_name": "Withdraw", "type": "defense", "effect": 80 },
+      { "move_name": "Protect", "type": "defense", "effect": 70 }
+    ]
+  },
+  {
+    "pokeId": 9,
+    "name": "Blastoise",
+    "hp": 1150,
+    "moves": [
+      { "move_name": "Hydro Pump", "type": "attack", "effect": 170 },
+      { "move_name": "Surf", "type": "attack", "effect": 140 },
+      { "move_name": "Flash Cannon", "type": "attack", "effect": 130 },
+      { "move_name": "Iron Defense", "type": "defense", "effect": 100 },
+      { "move_name": "Protect", "type": "defense", "effect": 90 }
+    ]
+  },
+  {
+    "pokeId": 10,
+    "name": "Pikachu",
+    "hp": 600,
+    "moves": [
+      { "move_name": "Thunder Shock", "type": "attack", "effect": 90 },
+      { "move_name": "Electro Ball", "type": "attack", "effect": 110 },
+      { "move_name": "Iron Tail", "type": "attack", "effect": 120 },
+      { "move_name": "Quick Attack", "type": "attack", "effect": 80 },
+      { "move_name": "Double Team", "type": "evade", "effect": 70 }
+    ]
+  }
+]
