@@ -41,11 +41,19 @@ const displayShapes = async (chosen) => {
 
 const main = async () => {
   const drawer = new Drawer();
+  const { columns, rows } = Deno.consoleSize();
+  console.log({columns, rows});
+  const screen = Array.from({ length: rows - 5 }, (_) =>
+    Array.from({ length: columns }, (x) => "\x1b \x1b[0m"),
+  );
 
   while (true) {
     console.clear();
     const chosen = await Deno.readTextFile("chosen.txt");
     displayShapes(chosen);
+
+    console.log(screen.map((x) => x.join("")).join("\n"));
+
     let sides = 0;
 
     if (chosen === "polygon") {
@@ -57,7 +65,7 @@ const main = async () => {
 
     if (initialPos && lastPos) {
       drawer.changeShape(chosen);
-      drawer.drawFn(initialPos, lastPos, sides);
+      drawer.drawFn(initialPos, lastPos, screen, sides);
     }
 
     await sleep(1000);

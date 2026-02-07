@@ -1,7 +1,7 @@
 import { distBtw } from "../../../utils/helper.js";
 import { drawLine } from "../../lines/algos/bresenhams_algo.js";
 
-export const drawPoly = (initialPos, lastPos, noOfSides) => {
+export const drawPoly = (initialPos, lastPos, screen, noOfSides) => {
   const r = distBtw(initialPos, lastPos);
   const angleStep = (2 * Math.PI) / noOfSides;
   const cx = +initialPos.x;
@@ -20,11 +20,11 @@ export const drawPoly = (initialPos, lastPos, noOfSides) => {
     const y = Math.round(cy + Math.sin(i * angleStep) * r);
     const present = { x, y };
 
-    drawLine(prev, present);
+    drawLine(prev, present, screen);
     prev.x = x;
     prev.y = y;
   }
-  
+
   // close the polygon
-  drawLine(prev, first);
+  drawLine(prev, first, screen);
 };

@@ -1,6 +1,6 @@
 import { drawAt } from "../../../utils/helper.js";
 
-export const drawLine = (initialPos, lastPos) => {
+export const drawLine = (initialPos, lastPos, screen) => {
   let { x: x1, y: y1 } = initialPos;
   let { x: x2, y: y2 } = lastPos;
 
@@ -18,7 +18,7 @@ export const drawLine = (initialPos, lastPos) => {
   let y = y1;
 
   while (true) {
-    drawAt(x, y);
+    drawAt(x, y, screen);
 
     if (x === x2 && y === y2) break;
 

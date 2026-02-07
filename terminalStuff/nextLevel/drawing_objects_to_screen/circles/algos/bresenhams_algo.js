@@ -1,13 +1,13 @@
 import { distBtw, drawAt } from "../../../utils/helper.js";
 
-export const drawCircle = (initialPos, lastPos) => {
+export const drawCircle = (initialPos, lastPos, screen) => {
   const r = distBtw(initialPos, lastPos);
   let x = 0;
   let y = r;
   let d = 3 - 2 * r;
   const { x: cx, y: cy } = initialPos;
 
-  plotPixels(x, y, +cx, +cy);
+  plotPixels(x, y, +cx, +cy, screen);
 
   while (x <= y) {
     if (d <= 0) d += 4 * x + r;
@@ -18,20 +18,20 @@ export const drawCircle = (initialPos, lastPos) => {
 
     x++;
 
-    plotPixels(x, y, +cx, +cy);
+    plotPixels(x, y, +cx, +cy, screen);
   }
 };
 
-const plotPixels = (x, y, xc, yc) => {
-  drawAt(xc + x * 2, yc + y);
-  drawAt(xc + y * 2, yc + x);
+const plotPixels = (x, y, xc, yc, screen) => {
+  drawAt(xc + x * 2, yc + y, screen);
+  drawAt(xc + y * 2, yc + x, screen);
 
-  drawAt(xc - x * 2, yc + y);
-  drawAt(xc + y * 2, yc - x);
+  drawAt(xc - x * 2, yc + y, screen);
+  drawAt(xc + y * 2, yc - x, screen);
 
-  drawAt(xc - x * 2, yc - y);
-  drawAt(xc - y * 2, yc - x);
+  drawAt(xc - x * 2, yc - y, screen);
+  drawAt(xc - y * 2, yc - x, screen);
 
-  drawAt(xc + x * 2, yc - y);
-  drawAt(xc - y * 2, yc + x);
+  drawAt(xc + x * 2, yc - y, screen);
+  drawAt(xc - y * 2, yc + x, screen);
 };
