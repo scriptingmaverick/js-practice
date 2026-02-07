@@ -1,6 +1,11 @@
 import { drawAt } from "../../../utils/helper.js";
 
-export const drawLine = (x1, y1, x2, y2) => {
+export const drawLine = (initialPos, lastPos) => {
+  let { x: x1, y: y1 } = initialPos;
+  let { x: x2, y: y2 } = lastPos;
+
+  [x1, x2, y1, y2] = [+x1, +x2, +y1, +y2];
+
   const dx = Math.abs(x2 - x1);
   const dy = Math.abs(y2 - y1);
 

@@ -1,13 +1,4 @@
-import {
-  disableMouseEvents,
-  enableMouseEvents,
-  readDragData,
-  setToRaw,
-} from "../../utils/helper.js";
 import { drawCircle } from "./algos/bresenhams_algo.js";
-
-setToRaw();
-await enableMouseEvents();
 
 const main = async () => {
   console.clear();
@@ -15,11 +6,8 @@ const main = async () => {
     const { initialPos, lastPos, canClose } = await readDragData();
     if (canClose) break;
 
-    const { x: x1, y: y1 } = initialPos;
-    const { x: x2, y: y2 } = lastPos;
-    drawCircle(+x1, +y1, +x2, +y2);
+    drawCircle(initialPos, lastPos);
   }
 };
 
 await main();
-await disableMouseEvents();

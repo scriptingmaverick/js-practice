@@ -24,7 +24,8 @@ export const drawAt = async (x, y) => {
   await Deno.stdout.write(encode(packet));
 };
 
-export const setToRaw = () => Deno.stdin.setRaw(true, { cbreak: true });
+export const setToRaw = () => Deno.stdin.setRaw(true);
+export const removeRaw = () => Deno.stdin.setRaw(false);
 
 export const enableMouseEvents = async () =>
   await Deno.stdout.write(encode("\x1b[?1003h\x1b[?1006h"));
@@ -41,6 +42,17 @@ export const readAndStoreInput = async (mover) => {
   const data = decode(input);
 
   const [method, x, y] = data.slice(3, -1).split(";");
+
+  if (data.at(-1) === "M" && method === "0") {
+    if (+y < 6) {
+      if (+x < 35) await Deno.writeTextFile("chosen.txt", "line");
+      else if (+x < 70) await Deno.writeTextFile("chosen.txt", "circle");
+      else if (+x < 105) await Deno.writeTextFile("chosen.txt", "square");
+      else await Deno.writeTextFile("chosen.txt", "polygon");
+
+      return { isDone: true };
+    }
+  }
 
   if (data.at(-1) === "M" && method === "32") {
     mover.path.push({ x, y });
@@ -63,6 +75,8 @@ export const readAndStoreInput = async (mover) => {
 };
 
 export const readDragData = async () => {
+  await setToRaw();
+  await enableMouseEvents();
   const mover = {
     path: [],
     buffer: new Uint8Array(100),
@@ -70,6 +84,30 @@ export const readDragData = async () => {
 
   while (true) {
     const result = await readAndStoreInput(mover);
-    if (result.isDone) return result;
+
+    if (result.isDone) {
+      await disableMouseEvents();
+      await removeRaw();
+      return result;
+    }
   }
+};
+
+export const subSq = (c1, c2) => Math.pow(c2 - c1, 2);
+
+export const distBtw = (p1, p2) => {
+  const xOff = subSq(+p2.x, +p1.x);
+  const yOff = subSq(+p2.y, +p1.y);
+
+  return Math.round(Math.sqrt(xOff + yOff));
+};
+
+export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+export const readSides = async () => {
+  const buffer = new Uint8Array(10);
+  await Deno.stdout.write(encode("\nEnter No.of sides of polygon : "));
+  const n = await Deno.stdin.read(buffer);
+
+  return decode(buffer.subarray(0, n));
 };
