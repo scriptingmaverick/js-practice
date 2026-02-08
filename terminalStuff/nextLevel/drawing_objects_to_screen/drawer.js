@@ -14,6 +14,8 @@ export class Drawer {
 
     this.shape = "Line";
     this.drawFn = this.shapesWithFns[this.shape];
+    this.i = 0;
+    this.states = [];
   }
 
   changeShape(shape) {
@@ -21,7 +23,20 @@ export class Drawer {
     this.drawFn = this.shapesWithFns[this.shape];
   }
 
-  draw(initialPos, lastPos, sides) {
-    this.drawFn(initialPos, lastPos, +sides);
+  draw(initialPos, lastPos, noOfSides) {
+    this.drawFn(initialPos, lastPos, this.states[this.i], noOfSides);
+  }
+
+  saveState() {
+    this.states.push(this.cloneScreen(this.states[this.i]));
+    this.i++;
+  }
+
+  printState() {
+    console.log(this.states[this.i].map((x) => x.join("")).join("\n"));
+  }
+
+  cloneScreen(screen) {
+    return screen.map((row) => [...row]);
   }
 }

@@ -2,6 +2,8 @@ import { encode, readDragData, sleep, readSides } from "../utils/helper.js";
 import { blue, green, red } from "jsr:@std/fmt/colors";
 import { Drawer } from "./drawer.js";
 
+const shapes = ["Line", "Circle", "Square", "Polygon", "Undo", "Redo"];
+
 const createBox = (container, text, chosen) => {
   const upperPart = "¯";
   const lowerPart = "_";
@@ -30,7 +32,6 @@ const createBox = (container, text, chosen) => {
 };
 
 const displayShapes = async (chosen) => {
-  const shapes = ["Line", "Circle", "Square", "Polygon", "Undo", "Redo"];
   const container = { head: "", body: "", footer: "" };
   shapes.forEach((x) => createBox(container, x, chosen));
 
@@ -41,45 +42,40 @@ const displayShapes = async (chosen) => {
   );
 };
 
-const print = (state) =>
-  state.states[state.i].map((x) => x.join("")).join("\n");
-
-const cloneScreen = (scr) => scr.map((row) => [...row]);
-
 const main = async () => {
   const drawer = new Drawer();
-  const state = { states: [], i: 0 };
   const { columns, rows } = Deno.consoleSize();
   const screen = Array.from({ length: rows - 6 }, (_) =>
     Array.from({ length: columns }, (_) => " "),
   );
 
-  state.states.push(cloneScreen(screen));
+  drawer.states.push(drawer.cloneScreen(screen));
 
   while (true) {
     console.clear();
     const chosen = await Deno.readTextFile("chosen.txt");
     displayShapes(chosen);
 
-    console.log(print(state));
+    drawer.printState();
 
-    let sides = 0;
-    if (chosen === "Polygon") {
-      sides = await readSides();
+    if (shapes.includes(chosen)) {
+      let sides = 0;
+      if (chosen === "Polygon") {
+        sides = await readSides();
+      }
+
+      const { initialPos, lastPos, canClose } = await readDragData(drawer);
+      if (canClose) break;
+
+      if (initialPos && lastPos) {
+        drawer.changeShape(chosen);
+        drawer.states.splice(drawer.i + 1);
+        drawer.draw(initialPos, lastPos, +sides);
+        drawer.saveState();
+      }
+
+      console.log(drawer.states.length, drawer.i);
     }
-
-    const { initialPos, lastPos, canClose } = await readDragData(state);
-    if (canClose) break;
-
-    if (initialPos && lastPos) {
-      drawer.changeShape(chosen);
-      state.states.splice(state.i + 1);
-      drawer.drawFn(initialPos, lastPos, state.states[state.i], sides);
-      state.states.push(cloneScreen(state.states[state.i]));
-      state.i++;
-    }
-
-    console.log(state.states.length, state.i);
   }
 };
 
