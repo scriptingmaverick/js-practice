@@ -24,9 +24,6 @@ export const drawAt = async (x, y, screen) => {
   if (y >= 6 && x >= 0 && x < screen[0].length && y < screen.length) {
     screen[y - 6][x] = "o";
   }
-
-  // console.log({ y, x, sc: screen[y - 5] });
-  await sleep(0);
 };
 
 export const setToRaw = () => Deno.stdin.setRaw(true);
@@ -38,6 +35,23 @@ export const enableMouseEvents = async () =>
 export const disableMouseEvents = async () =>
   await Deno.stdout.write(encode("\x1b[?1003l\x1b[?1006l"));
 
+export const changeShape = (x, state) => {
+  if (x < 25) {
+    state.changeShape("Free style");
+  } else if (x < 50) {
+    state.changeShape("Line");
+  } else if (x < 75) {
+    state.changeShape("Circle");
+  } else if (x < 100) {
+    state.changeShape("Square");
+  } else if (x < 125) {
+    state.changeShape("Polygon");
+  } else if (x < 150 && state.states.length >= 1 && state.i >= 1) state.i--;
+  else if (x > 175) state.changeShape("Erase");
+  else if (state.i < state.states.length - 1 && state.states.length > 1)
+    state.i++;
+};
+
 export const readAndStoreInput = async (mover, state) => {
   const bytesRead = await Deno.stdin.read(mover.buffer);
   const input = mover.buffer.subarray(0, bytesRead);
@@ -45,23 +59,11 @@ export const readAndStoreInput = async (mover, state) => {
   if (mover.buffer[0] === 113) return { isDone: true, canClose: true };
 
   const data = decode(input);
-
   const [method, x, y] = data.slice(3, -1).split(";");
 
   if (data.at(-1) === "M" && method === "0") {
     if (+y < 6) {
-      console.log({ x, y });
-      if (+x < 30) {
-        await Deno.writeTextFile("chosen.txt", "Line");
-      } else if (+x < 60) {
-        await Deno.writeTextFile("chosen.txt", "Circle");
-      } else if (+x < 90) {
-        await Deno.writeTextFile("chosen.txt", "Square");
-      } else if (+x < 120) {
-        await Deno.writeTextFile("chosen.txt", "Polygon");
-      } else if (+x < 150 && state.states.length > 1 && state.i >= 1) state.i--;
-      else if (state.i < state.states.length - 1) state.i++;
-
+      changeShape(+x, state);
       return { isDone: true };
     }
   }
@@ -122,4 +124,31 @@ export const readSides = async () => {
   const n = await Deno.stdin.read(buffer);
 
   return decode(buffer.subarray(0, n));
+};
+
+export const shapes = ["Line", "Circle", "Square", "Polygon", "Undo", "Redo"];
+
+export const freeStyles = ["Free style", "Erase"];
+
+export const createBox = (container, text, chosen) => {
+  const upperPart = "¯";
+  const lowerPart = "_";
+  const sidePart = "|";
+  const boxSize = 20;
+  const space = " ".repeat(5);
+  const data = text == chosen ? blue(text) : text;
+  const padStartSize = Math.round((boxSize - text.length) / 2) + data.length;
+  container.head += space + sidePart + upperPart.repeat(boxSize - 2) + sidePart;
+  container.body +=
+    space +
+    sidePart +
+    data
+      .padStart(padStartSize - 1)
+      .padEnd(
+        boxSize - 1 * (chosen === text ? -(data.length - text.length) + 2 : 2),
+      ) +
+    sidePart;
+
+  container.footer +=
+    space + sidePart + lowerPart.repeat(boxSize - 2) + sidePart;
 };
