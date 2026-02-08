@@ -5,12 +5,12 @@ import {
   enableMouseEvents,
   removeRaw,
   setToRaw,
-  sleep,
+  encode,
 } from "../utils/helper.js";
 
 const drawAt = (x, y, screen, char) => {
   if (y >= 6 && x >= 0 && x < screen[0].length && y < screen.length)
-    screen[y - 6][x] = char;
+    screen[y - 4][x - 1] = char;
 };
 
 export const drawFree = async (drawer, char) => {
@@ -20,7 +20,6 @@ export const drawFree = async (drawer, char) => {
 
   while (true) {
     const n = await Deno.stdin.read(buffer);
-
     const input = decode(buffer.subarray(0, n));
 
     if (buffer[0] === 113) {
@@ -33,17 +32,21 @@ export const drawFree = async (drawer, char) => {
     const [method, x, y] = data.split(";");
 
     if (input.slice(-1) === "M" && method === "0" && +y < 6) {
-      await changeShape(+x, drawer);
+      changeShape(+x, drawer);
       await disableMouseEvents();
       await removeRaw();
       return { canClose: false };
     }
 
-    if (input.slice(-1) === "M" && method === "32") {
-      drawAt(+x, +y, drawer.states[drawer.i], char);
-      // console.clear();
-      const chosen = await Deno.readTextFile("chosen.txt");
-      drawer.printState(chosen);
+    if (input.endsWith("M") && method === "32") {
+      const newX = +x;
+      const newY = +y;
+
+      if (newY >= 6) {
+        drawAt(newX, newY, drawer.states[drawer.i], char);
+        const moveCursor = `\x1b[${newY};${newX}H${char}`;
+        Deno.stdout.writeSync(encode(moveCursor));
+      }
     }
   }
 };

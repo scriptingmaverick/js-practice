@@ -43,26 +43,21 @@ export class Drawer {
     this.i++;
   }
 
-  getUIString(chosen) {
+  getUIString() {
     const allShapes = [freeStyles[0], ...shapes, freeStyles[1]];
     const container = { head: "", body: "", footer: "" };
-    allShapes.forEach((x) => createBox(container, x, chosen));
+    allShapes.forEach((x) => createBox(container, x, this.shape));
     return [container.head, container.body, container.footer].join("\n");
   }
 
-  printState(chosen) {
-    // Move cursor to 0,0 instead of clearing screen to prevent flicker
+  printState() {
     let output = "\x1b[H";
-
-    // 1. Get the UI Header (the boxes)
-    output += this.getUIString(chosen) + "\n";
-
-    // 2. Get the Canvas
+    output += this.getUIString() + "\n";
     output += this.states[this.i].map((x) => x.join("")).join("\n");
 
-    // 3. Single Write
     Deno.stdout.writeSync(new TextEncoder().encode(output));
   }
+
   cloneScreen(screen) {
     return screen.map((row) => [...row]);
   }

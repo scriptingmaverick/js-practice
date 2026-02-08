@@ -1,7 +1,6 @@
 import { distBtw, drawAt } from "../../../utils/helper.js";
 
 export const drawCircle = (initialPos, lastPos, screen) => {
-  console.log('src => ',screen.length)
   const r = distBtw(initialPos, lastPos);
   let x = 0;
   let y = r;

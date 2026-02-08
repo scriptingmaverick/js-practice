@@ -13,8 +13,8 @@ const main = async () => {
   console.clear();
 
   while (true) {
-    const chosen = await Deno.readTextFile("chosen.txt");
-    drawer.printState(chosen);
+    const chosen = drawer.shape;
+    drawer.printState();
 
     if (!freeStyles.includes(chosen)) {
       let sides = 0;
@@ -30,7 +30,7 @@ const main = async () => {
         drawer.drawShape(initialPos, lastPos, +sides);
         drawer.saveState();
       }
-      console.log(drawer.states.length, drawer.i);
+
       continue;
     }
 
