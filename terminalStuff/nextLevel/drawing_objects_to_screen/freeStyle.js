@@ -9,8 +9,12 @@ import {
 } from "../utils/helper.js";
 
 const drawAt = (x, y, screen, char) => {
-  if (y >= 6 && x >= 0 && x < screen[0].length && y < screen.length)
-    screen[y - 4][x - 1] = char;
+  const canvasY = y - 4;
+  const canvasX = x - 1;
+
+  if (screen[canvasY] && screen[canvasY][canvasX] !== undefined) {
+    screen[canvasY][canvasX] = char;
+  }
 };
 
 export const drawFree = async (drawer, char) => {
@@ -39,6 +43,7 @@ export const drawFree = async (drawer, char) => {
     }
 
     if (input.endsWith("M") && method === "32") {
+      // console.log({ x, y, char });
       const newX = +x;
       const newY = +y;
 

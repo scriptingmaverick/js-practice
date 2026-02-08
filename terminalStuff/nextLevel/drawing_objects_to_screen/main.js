@@ -5,7 +5,7 @@ import { Drawer } from "./drawer.js";
 const main = async () => {
   const drawer = new Drawer();
   const { columns, rows } = Deno.consoleSize();
-  const screen = Array.from({ length: rows - 6 }, (_) =>
+  const screen = Array.from({ length: rows - 7 }, (_) =>
     Array.from({ length: columns }, (_) => " "),
   );
 
