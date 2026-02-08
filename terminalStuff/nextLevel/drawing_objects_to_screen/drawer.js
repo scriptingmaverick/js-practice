@@ -6,13 +6,13 @@ import { drawSquare } from "./square/algos/my_algo.js";
 export class Drawer {
   constructor() {
     this.shapesWithFns = {
-      circle: drawCircle,
-      square: drawSquare,
-      polygon: drawPoly,
-      line: drawLine,
+      Circle: drawCircle,
+      Square: drawSquare,
+      Polygon: drawPoly,
+      Line: drawLine,
     };
 
-    this.shape = "line";
+    this.shape = "Line";
     this.drawFn = this.shapesWithFns[this.shape];
   }
 

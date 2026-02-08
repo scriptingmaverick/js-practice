@@ -12,16 +12,21 @@ function format(x, text) {
   return blue(text);
 }
 
-export const drawAt = async (x, y) => {
-  // \x1b[s saves cursor position
-  // \x1b[y;xH moves cursor
-  // \x1b[u restores cursor position
-  const moveCursor = `\x1b[${y};${x}H`;
-  const char = format(x, `${moveCursor}o`);
+export const drawAt = async (x, y, screen) => {
+  if (!screen) {
+    const moveCursor = `\x1b[${y};${x}H`;
+    const char = format(x, `${moveCursor}o`);
 
-  // const char = `\x1b[48;2;255;0;0;m${moveCursor}.\x1b[0m`;
-  const packet = `\x1b[s${char}\x1b[u`;
-  await Deno.stdout.write(encode(packet));
+    const packet = `\x1b[s${char}\x1b[u`;
+    await Deno.stdout.write(encode(packet));
+  }
+
+  if (y >= 6 && x >= 0 && x < screen[0].length && y < screen.length) {
+    screen[y - 6][x] = "o";
+  }
+
+  // console.log({ y, x, sc: screen[y - 5] });
+  await sleep(0);
 };
 
 export const setToRaw = () => Deno.stdin.setRaw(true);
@@ -33,7 +38,7 @@ export const enableMouseEvents = async () =>
 export const disableMouseEvents = async () =>
   await Deno.stdout.write(encode("\x1b[?1003l\x1b[?1006l"));
 
-export const readAndStoreInput = async (mover) => {
+export const readAndStoreInput = async (mover, state) => {
   const bytesRead = await Deno.stdin.read(mover.buffer);
   const input = mover.buffer.subarray(0, bytesRead);
 
@@ -45,10 +50,17 @@ export const readAndStoreInput = async (mover) => {
 
   if (data.at(-1) === "M" && method === "0") {
     if (+y < 6) {
-      if (+x < 35) await Deno.writeTextFile("chosen.txt", "line");
-      else if (+x < 70) await Deno.writeTextFile("chosen.txt", "circle");
-      else if (+x < 105) await Deno.writeTextFile("chosen.txt", "square");
-      else await Deno.writeTextFile("chosen.txt", "polygon");
+      console.log({ x, y });
+      if (+x < 30) {
+        await Deno.writeTextFile("chosen.txt", "Line");
+      } else if (+x < 60) {
+        await Deno.writeTextFile("chosen.txt", "Circle");
+      } else if (+x < 90) {
+        await Deno.writeTextFile("chosen.txt", "Square");
+      } else if (+x < 120) {
+        await Deno.writeTextFile("chosen.txt", "Polygon");
+      } else if (+x < 150 && state.states.length > 1 && state.i >= 1) state.i--;
+      else if (state.i < state.states.length - 1) state.i++;
 
       return { isDone: true };
     }
@@ -74,7 +86,7 @@ export const readAndStoreInput = async (mover) => {
   return { isDone: false };
 };
 
-export const readDragData = async () => {
+export const readDragData = async (state) => {
   await setToRaw();
   await enableMouseEvents();
   const mover = {
@@ -83,7 +95,7 @@ export const readDragData = async () => {
   };
 
   while (true) {
-    const result = await readAndStoreInput(mover);
+    const result = await readAndStoreInput(mover, state);
 
     if (result.isDone) {
       await disableMouseEvents();

@@ -6,7 +6,7 @@ const createBox = (container, text, chosen) => {
   const upperPart = "¯";
   const lowerPart = "_";
   const sidePart = "|";
-  const boxSize = 30;
+  const boxSize = 25;
   const space = " ".repeat(5);
   const data = text == chosen ? blue(text) : text;
 
@@ -30,45 +30,56 @@ const createBox = (container, text, chosen) => {
 };
 
 const displayShapes = async (chosen) => {
-  const shapes = ["line", "circle", "square", "polygon"];
+  const shapes = ["Line", "Circle", "Square", "Polygon", "Undo", "Redo"];
   const container = { head: "", body: "", footer: "" };
   shapes.forEach((x) => createBox(container, x, chosen));
 
   await Deno.stdout.write(
-    encode([container.head, container.body, container.footer].join("\n")),
+    encode(
+      [container.head, container.body, container.footer].join("\n") + "\n",
+    ),
   );
 };
 
+const print = (state) =>
+  state.states[state.i].map((x) => x.join("")).join("\n");
+
+const cloneScreen = (scr) => scr.map((row) => [...row]);
+
 const main = async () => {
   const drawer = new Drawer();
+  const state = { states: [], i: 0 };
   const { columns, rows } = Deno.consoleSize();
-  console.log({columns, rows});
-  const screen = Array.from({ length: rows - 5 }, (_) =>
-    Array.from({ length: columns }, (x) => "\x1b \x1b[0m"),
+  const screen = Array.from({ length: rows - 6 }, (_) =>
+    Array.from({ length: columns }, (_) => " "),
   );
+
+  state.states.push(cloneScreen(screen));
 
   while (true) {
     console.clear();
     const chosen = await Deno.readTextFile("chosen.txt");
     displayShapes(chosen);
 
-    console.log(screen.map((x) => x.join("")).join("\n"));
+    console.log(print(state));
 
     let sides = 0;
-
-    if (chosen === "polygon") {
+    if (chosen === "Polygon") {
       sides = await readSides();
     }
 
-    const { initialPos, lastPos, canClose } = await readDragData();
+    const { initialPos, lastPos, canClose } = await readDragData(state);
     if (canClose) break;
 
     if (initialPos && lastPos) {
       drawer.changeShape(chosen);
-      drawer.drawFn(initialPos, lastPos, screen, sides);
+      state.states.splice(state.i + 1);
+      drawer.drawFn(initialPos, lastPos, state.states[state.i], sides);
+      state.states.push(cloneScreen(state.states[state.i]));
+      state.i++;
     }
 
-    await sleep(1000);
+    console.log(state.states.length, state.i);
   }
 };
 
