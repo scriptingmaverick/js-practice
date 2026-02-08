@@ -1,4 +1,5 @@
 import { drawCircle } from "./circles/algos/bresenhams_algo.js";
+import { drawFree } from "./freeStyle.js";
 import { drawLine } from "./lines/algos/bresenhams_algo.js";
 import { drawPoly } from "./polygon/algo/my_algo.js";
 import { drawSquare } from "./square/algos/my_algo.js";
@@ -12,7 +13,7 @@ export class Drawer {
       Line: drawLine,
     };
 
-    this.shape = "Line";
+    this.shape = "Free style";
     this.drawFn = this.shapesWithFns[this.shape];
     this.i = 0;
     this.states = [];
@@ -23,8 +24,17 @@ export class Drawer {
     this.drawFn = this.shapesWithFns[this.shape];
   }
 
-  draw(initialPos, lastPos, noOfSides) {
+  drawShape(initialPos, lastPos, noOfSides) {
+    this.states.splice(this.i + 1);
     this.drawFn(initialPos, lastPos, this.states[this.i], noOfSides);
+  }
+
+  async drawFree(drawer) {
+    if (drawer.shape !== "Erase") {
+      return await drawFree(drawer, "o");
+    }
+
+    await drawFree(drawer, " ");
   }
 
   saveState() {
