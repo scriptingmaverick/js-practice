@@ -1,10 +1,4 @@
-import {
-  readDragData,
-  sleep,
-  readSides,
-  displayShapes,
-  freeStyles,
-} from "../utils/helper.js";
+import { readDragData, sleep, readSides, freeStyles } from "../utils/helper.js";
 import { blue, green, red } from "jsr:@std/fmt/colors";
 import { Drawer } from "./drawer.js";
 
@@ -16,13 +10,11 @@ const main = async () => {
   );
 
   drawer.states.push(drawer.cloneScreen(screen));
+  console.clear();
 
   while (true) {
-    console.clear();
     const chosen = await Deno.readTextFile("chosen.txt");
-    displayShapes(chosen);
-
-    drawer.printState();
+    drawer.printState(chosen);
 
     if (!freeStyles.includes(chosen)) {
       let sides = 0;

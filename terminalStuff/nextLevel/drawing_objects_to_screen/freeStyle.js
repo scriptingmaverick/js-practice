@@ -2,7 +2,6 @@ import {
   changeShape,
   decode,
   disableMouseEvents,
-  displayShapes,
   enableMouseEvents,
   removeRaw,
   setToRaw,
@@ -42,10 +41,9 @@ export const drawFree = async (drawer, char) => {
 
     if (input.slice(-1) === "M" && method === "32") {
       drawAt(+x, +y, drawer.states[drawer.i], char);
-      console.clear();
+      // console.clear();
       const chosen = await Deno.readTextFile("chosen.txt");
-      displayShapes(chosen);
-      drawer.printState();
+      drawer.printState(chosen);
     }
   }
 };

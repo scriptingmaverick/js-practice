@@ -1,3 +1,4 @@
+import { createBox, freeStyles, shapes } from "../utils/helper.js";
 import { drawCircle } from "./circles/algos/bresenhams_algo.js";
 import { drawFree } from "./freeStyle.js";
 import { drawLine } from "./lines/algos/bresenhams_algo.js";
@@ -34,7 +35,7 @@ export class Drawer {
       return await drawFree(drawer, "o");
     }
 
-    await drawFree(drawer, " ");
+    return await drawFree(drawer, " ");
   }
 
   saveState() {
@@ -42,10 +43,26 @@ export class Drawer {
     this.i++;
   }
 
-  printState() {
-    console.log(this.states[this.i].map((x) => x.join("")).join("\n"));
+  getUIString(chosen) {
+    const allShapes = [freeStyles[0], ...shapes, freeStyles[1]];
+    const container = { head: "", body: "", footer: "" };
+    allShapes.forEach((x) => createBox(container, x, chosen));
+    return [container.head, container.body, container.footer].join("\n");
   }
 
+  printState(chosen) {
+    // Move cursor to 0,0 instead of clearing screen to prevent flicker
+    let output = "\x1b[H";
+
+    // 1. Get the UI Header (the boxes)
+    output += this.getUIString(chosen) + "\n";
+
+    // 2. Get the Canvas
+    output += this.states[this.i].map((x) => x.join("")).join("\n");
+
+    // 3. Single Write
+    Deno.stdout.writeSync(new TextEncoder().encode(output));
+  }
   cloneScreen(screen) {
     return screen.map((row) => [...row]);
   }
