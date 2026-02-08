@@ -52,10 +52,13 @@ export class Drawer {
 
   printState() {
     let output = "\x1b[H";
-    output += this.getUIString() + "\n";
-    output += this.states[this.i].map((x) => x.join("")).join("\n");
 
-    Deno.stdout.writeSync(new TextEncoder().encode(output));
+    output += this.getUIString() + "\n";
+
+    output += this.states[this.i].map((row) => row.join("")).join("\n");
+    // Deno.stdout.writeSync(new TextEncoder().encode(output));
+    // Deno.stdout.writeSync(new TextEncoder().encode(canvas));
+    console.log(output);
   }
 
   cloneScreen(screen) {

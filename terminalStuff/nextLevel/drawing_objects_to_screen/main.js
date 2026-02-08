@@ -5,8 +5,11 @@ import { Drawer } from "./drawer.js";
 const main = async () => {
   const drawer = new Drawer();
   const { columns, rows } = Deno.consoleSize();
-  const screen = Array.from({ length: rows - 7 }, (_) =>
-    Array.from({ length: columns }, (_) => " "),
+  
+  const canvasHeight = rows - 7;
+
+  const screen = Array.from({ length: canvasHeight }, () =>
+    Array.from({ length: columns }, () => " "),
   );
 
   drawer.states.push(drawer.cloneScreen(screen));
