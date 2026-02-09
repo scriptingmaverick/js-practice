@@ -12,8 +12,10 @@ const drawAt = (x, y) => {
   // \x1b[s saves cursor position
   // \x1b[y;xH moves cursor
   // \x1b[u restores cursor position
-  const moveCursor = `\x1b[${y};${x}H`;
-  Deno.stdout.write(new TextEncoder().encode(format(x, `${moveCursor} `)));
+  const char = format(x, ` `);
+  Deno.stdout.write(
+    new TextEncoder().encode(`\x1b[s\x1b[${y};${x}H${char}\x1b[u`),
+  );
 };
 
 Deno.stdin.setRaw(true, { cbreak: true });
@@ -28,16 +30,13 @@ while (true) {
   const n = await Deno.stdin.read(buffer);
 
   const input = decoder.decode(buffer.subarray(0, n));
-  if (buffer[0] === 113) break;
 
+  if (buffer[0] === 113) break;
   const data = input.slice(3, -1);
 
-  const [btn, x, y] = data.split(";");
-
-  if (btn === "0" && !isDragging) isDragging = true;
-  else if (btn === "0" && isDragging) isDragging = false;
-
-  if (isDragging) drawAt(x, y);
+  const [method, x, y] = data.split(";");
+  // console.log(method);
+  if (method === "32") drawAt(x, y);
 }
 
 await Deno.stdout.write(encoder.encode("\x1b[?1003l"));
