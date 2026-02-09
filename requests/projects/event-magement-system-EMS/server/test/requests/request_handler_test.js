@@ -1,5 +1,5 @@
 import { describe, it } from "@std/testing";
-import { assertEquals, assertRejects, assertThrows } from "@std/assert";
+import { assertEquals, assertRejects } from "@std/assert";
 import { parse } from "../../src/requests/request_handler.js";
 
 describe("testing parser", () => {
