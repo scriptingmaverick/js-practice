@@ -36,9 +36,7 @@ const main = () => {
     "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2",
     "2 * 3 + (4 * 5)",
     "(9 + (5 + 2 + 2 * 4) * (7 + 7 * 5 * 3) + 7) + 2 + 4 * 2 + 3 * (8 + 5)",
-  ].map(
-    (x) => x.replaceAll(" ", "").split(""),
-  );
+  ].map((x) => x.replaceAll(" ", "").split(""));
 
   // for (const expr of input) {
   //   const exp1 = expr.slice();
