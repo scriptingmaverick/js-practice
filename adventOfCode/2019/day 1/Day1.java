@@ -1,3 +1,7 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 class SpaceCraft {
   public int calcualteFuelRequired(int mass) {
     return Math.round(mass / 3) - 2;
@@ -30,15 +34,23 @@ class Checker {
 
     System.out.println("Checking with array of [ 12, 14, 1969, 100756 ] : " + sc.recursiveAdd(masses));
   }
+
+  public void testWithInputFile(SpaceCraft sc) throws IOException {
+    int[] masses = Files.readAllLines(Path.of("input.txt")).stream()
+        .mapToInt(line -> Integer.parseInt(line.trim()))
+        .toArray();
+
+    System.out.println("Checking with values from input.txt : " + sc.recursiveAdd(masses));
+  }
 }
 
 public class Day1 {
-  public static void main(String[] a) {
+  public static void main(String[] a) throws IOException {
     Checker ch = new Checker();
     SpaceCraft sc = new SpaceCraft();
 
     // ch.minimalTest(sc);
-    
-    ch.testWithArray(sc);
+
+    ch.testWithInputFile(sc);
   }
 }
