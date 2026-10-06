@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+
+
 class SpaceCraft {
   public int calcualteFuelRequired(int mass) {
     return Math.round(mass / 3) - 2;
@@ -14,6 +16,18 @@ class SpaceCraft {
     }
 
     return sum;
+  }
+
+  public long recursiveAddWithFuel(int mass) {
+    if (mass < 3)
+      return 0l;
+
+    int fuelRequired = calcualteFuelRequired(mass);
+
+    if(fuelRequired < 0)
+      return 0l;
+
+    return fuelRequired + recursiveAddWithFuel(fuelRequired);
   }
 }
 
@@ -42,6 +56,16 @@ class Checker {
 
     System.out.println("Checking with values from input.txt : " + sc.recursiveAdd(masses));
   }
+
+  public void minimalTest2(SpaceCraft sc) {
+    System.out.println("For m = 12 : " + sc.recursiveAddWithFuel(12));
+
+    System.out.println("For m = 14 : " + sc.recursiveAddWithFuel(14));
+
+    System.out.println("For m = 1969 : " + sc.recursiveAddWithFuel(1969));
+
+    System.out.println("For m = 100756 : " + sc.recursiveAddWithFuel(100756));
+  }
 }
 
 public class Day1 {
@@ -50,7 +74,9 @@ public class Day1 {
     SpaceCraft sc = new SpaceCraft();
 
     // ch.minimalTest(sc);
+    // ch.testWithArray(sc);
+    // ch.testWithInputFile(sc);
 
-    ch.testWithInputFile(sc);
+    ch.minimalTest2(sc);
   }
 }
