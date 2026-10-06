@@ -21,7 +21,7 @@ class SpaceCraft {
     return sum;
   }
 
-  public long recursiveAddWithFuel(int mass) {
+  public long recursiveCalculationForFuel(int mass) {
     if (mass < 3)
       return 0l;
 
@@ -30,7 +30,7 @@ class SpaceCraft {
     if(fuelRequired < 0)
       return 0l;
 
-    return fuelRequired + recursiveAddWithFuel(fuelRequired);
+    return fuelRequired + recursiveCalculationForFuel(fuelRequired);
   }
 }
 
@@ -55,7 +55,7 @@ class Checker {
   public void testWithArray2(SpaceCraft sc) {
     int[] masses = { 12, 14, 1969, 100756 };
 
-    System.out.println("Checking with array of [ 12, 14, 1969, 100756 ] : " + sc.recursiveAdd(masses, (int mass) -> sc.recursiveAddWithFuel(mass)));
+    System.out.println("Checking with array of [ 12, 14, 1969, 100756 ] : " + sc.recursiveAdd(masses, (int mass) -> sc.recursiveCalculationForFuel(mass)));
   }
 
   public void testWithInputFile(SpaceCraft sc) throws IOException {
@@ -63,17 +63,26 @@ class Checker {
         .mapToInt(line -> Integer.parseInt(line.trim()))
         .toArray();
 
-    System.out.println("Checking with values from input.txt : " + sc.recursiveAdd(masses, (int mass) -> sc.calcualteFuelRequired(mass)));
+    System.out.println("Checking with values from input.txt : "
+        + sc.recursiveAdd(masses, (int mass) -> sc.calcualteFuelRequired(mass)));
+  }
+  
+  public void testWithInputFile2(SpaceCraft sc) throws IOException {
+    int[] masses = Files.readAllLines(Path.of("input.txt")).stream()
+        .mapToInt(line -> Integer.parseInt(line.trim()))
+        .toArray();
+
+    System.out.println("Checking with values from input.txt : " + sc.recursiveAdd(masses, (int mass) -> sc.recursiveCalculationForFuel(mass)));
   }
 
   public void minimalTest2(SpaceCraft sc) {
-    System.out.println("For m = 12 : " + sc.recursiveAddWithFuel(12));
+    System.out.println("For m = 12 : " + sc.recursiveCalculationForFuel(12));
 
-    System.out.println("For m = 14 : " + sc.recursiveAddWithFuel(14));
+    System.out.println("For m = 14 : " + sc.recursiveCalculationForFuel(14));
 
-    System.out.println("For m = 1969 : " + sc.recursiveAddWithFuel(1969));
+    System.out.println("For m = 1969 : " + sc.recursiveCalculationForFuel(1969));
 
-    System.out.println("For m = 100756 : " + sc.recursiveAddWithFuel(100756));
+    System.out.println("For m = 100756 : " + sc.recursiveCalculationForFuel(100756));
   }
 }
 
@@ -83,10 +92,11 @@ public class Day1 {
     SpaceCraft sc = new SpaceCraft();
 
     // ch.minimalTest(sc);
-    ch.testWithArray(sc);
+    // ch.testWithArray(sc);
     // ch.testWithInputFile(sc);
 
     // ch.minimalTest2(sc);
-    ch.testWithArray2(sc);
+    // ch.testWithArray2(sc);
+    ch.testWithInputFile2(sc);
   }
 }
