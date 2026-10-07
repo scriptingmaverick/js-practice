@@ -1,3 +1,6 @@
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 class IntCodeProgram {
   public int[] run(int[] program) {
@@ -63,13 +66,27 @@ class Checker {
     System.out.println(
         "Test input: " + java.util.Arrays.toString(input4) + ", Output: " + java.util.Arrays.toString(output4));
   }
+
+  public void testWithInput(IntCodeProgram program) throws IOException {
+    int[] programCode = Files.readAllLines(Path.of("input.txt")).stream()
+        .flatMap(line -> java.util.Arrays.stream(line.split(","))).mapToInt(Integer::parseInt)
+        .toArray();
+
+    programCode[1] = 12;
+    programCode[2] = 2;
+
+    int[] output = program.run(programCode.clone());
+
+    System.out.println(
+        "Test input: " + java.util.Arrays.toString(programCode) + "\n\nOutput: " + java.util.Arrays.toString(output));
+  }
 }
 
 public class Day2 {
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
     IntCodeProgram program = new IntCodeProgram();
     Checker checker = new Checker();
 
-    checker.minimalTest(program);
+    checker.testWithInput(program);
   }
 }
