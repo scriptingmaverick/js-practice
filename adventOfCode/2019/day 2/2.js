@@ -83,5 +83,4 @@ const sprintPart2 = (rawCommands) => {
   }
 };
 
-// console.log(sprintPart2(input));
-console.log(sprint(input));
+console.log(sprintPart2(input));

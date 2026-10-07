@@ -3,9 +3,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 class IntCodeProgram {
-  public int[] run(int[] program) {
+  public int[] run(int[] programCode) {
     int i = 0;
-
+    int[] program = programCode.clone();
     while (i < program.length) {
       int opcode = program[i];
 
@@ -32,7 +32,7 @@ class IntCodeProgram {
           i = program.length;
           break;
         default:
-          break;
+          throw new RuntimeException("Some error happened i: " + i);
       }
     }
     return program; 
@@ -80,6 +80,29 @@ class Checker {
     System.out.println(
         "Test input: " + java.util.Arrays.toString(programCode) + "\n\nOutput: " + java.util.Arrays.toString(output));
   }
+
+  public void testWithDeterminedInput(IntCodeProgram program) throws IOException {
+    int[] programCode = Files.readAllLines(Path.of("input.txt")).stream()
+        .flatMap(line -> java.util.Arrays.stream(line.split(","))).mapToInt(Integer::parseInt)
+        .toArray();
+
+    for (int noun = 0; noun <= 99; noun++) {
+      int[] input = programCode.clone();
+      input[1] = noun;
+      
+      for (int verb = 0; verb <= 99; verb++) {
+        System.out.println("noun: " + noun + ", verb: " + verb);
+        input[2] = verb;
+
+        int[] output = program.run(input);
+
+        if (output[0] == 19690720) {
+          System.out.println("sol: " + (noun * 100 + verb));
+          return;
+        }
+      }
+    }
+  }
 }
 
 public class Day2 {
@@ -87,6 +110,6 @@ public class Day2 {
     IntCodeProgram program = new IntCodeProgram();
     Checker checker = new Checker();
 
-    checker.testWithInput(program);
+    checker.testWithDeterminedInput(program);
   }
 }
